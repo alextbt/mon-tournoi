@@ -13,7 +13,8 @@ export default function RulesPage() {
 
         <section className="mb-8">
           <h2 className="text-2xl font-semibold text-purple-700 mb-2">👥 Format de la compétition</h2>
-          <p>Les joueurs participent individuellement au tournoi mais certains événements nécessitent la participation en équipe. Rejoignez une équipe en entrant le nom de l'équipe à l'inscription. Notez que l'inscription à une équipe est définitive.</p>
+          <p>Les joueurs participent individuellement au tournoi mais certains événements nécessitent la participation en équipe. Rejoignez une équipe en entrant le nom de l&apos;équipe à l&apos;inscription. 
+            Notez que l&apos;inscription à une équipe est définitive.</p>
         </section>
 
         <section className="mb-8">
@@ -28,12 +29,14 @@ export default function RulesPage() {
 
         <section className="mb-8">
           <h2 className="text-2xl font-semibold text-purple-700 mb-2">✍️ Réclamations et propositions</h2>
-          <p>Si vous avez des suggestions à faire sur l'organisation du tournoi, du site dédié, sur l'ajout de catégories ou de réalisations (dans les jeux, les sports ou en culture générale), n'hésitez pas à en faire part dans le salon dédié sur le Discord.</p>
+          <p>Si vous avez des suggestions à faire sur l&apos;organisation du tournoi, du site dédié, sur l&apos;ajout de catégories ou de réalisations (dans les jeux, les sports ou en culture générale), 
+            n&apos;hésitez pas à en faire part dans le salon dédié sur le Discord.</p>
         </section>
 
         <section className="mb-8">
           <h2 className="text-2xl font-semibold text-purple-700 mb-2">🏆 Récompense</h2>
-          <p>Deux récompenses seront distribuées, respectivement au gagnant et à l'équipe gagnante. Les prix sont mineurs, ne faisant figure que de symbole. Jouez pour la compétition, pas pour le prix.</p>
+          <p>Deux récompenses seront distribuées, respectivement au gagnant et à l&apos;équipe gagnante. Les prix sont mineurs, ne faisant figure que de symbole. 
+            Jouez pour la compétition, pas pour le prix.</p>
         </section>
 
         <section className="mb-8">

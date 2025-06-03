@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 
 export default function Home() {
-  const [user, setUser] = useState<unknown>(null);
+  const [, setUser] = useState<unknown>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
