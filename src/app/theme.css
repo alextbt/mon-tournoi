@@ -1,0 +1,96 @@
+/* src/app/theme.css */
+
+/* Import de la police Exo 2 pour un style spatial et technologique */
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;800&display=swap');
+
+:root {
+  /* Couleurs de base */
+  --background-color: #1f1f2e; /* Noir spatial léger */
+  --text-color: #e0e0e0;
+  --accent-color: #eb2f96;   /* Néon rose */
+  --secondary-accent: #9b59b6; /* Néon violet */
+}
+
+/* Application globale */
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  font-family: 'Exo 2', sans-serif;
+  line-height: 1.5;
+}
+
+/* Boutons néon */
+.btn-neon {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  font-family: 'Exo 2', sans-serif;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent-color), var(--secondary-accent));
+  border: none;
+  border-radius: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 0 8px var(--accent-color), 0 0 16px var(--secondary-accent);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-neon:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 12px var(--accent-color), 0 0 24px var(--secondary-accent);
+}
+
+/* Boutons de nav discrets pour la navbar */
+.btn-nav {
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(0,0,0,0);      /* transparent de base */
+  transition: color 0.2s, border-color 0.2s;
+}
+.btn-nav:hover {
+  color: var(--accent-blue);
+  border-color: var(--accent-blue);
+}
+
+/* Fond radial subtil pour sections */
+.bg-spatial {
+  background-image: radial-gradient(circle at center, rgba(155,89,182,0.15) 0%, transparent 80%);
+}
+
+/* Utility pour centrer le contenu */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+:root {
+  --accent-blue: #3498db;
+  --secondary-accent: #9b59b6;
+}
+
+.btn-achievements {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  font-family: 'Exo 2', sans-serif;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent-blue), var(--secondary-accent));
+  border: none;
+  border-radius: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 0 8px var(--accent-blue), 0 0 16px var(--secondary-accent);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-achievements:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 12px var(--accent-blue), 0 0 24px var(--secondary-accent);
+}

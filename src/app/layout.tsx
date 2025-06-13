@@ -1,4 +1,5 @@
 import './globals.css';
+import './theme.css';
 import { Poppins } from 'next/font/google';
 import Navbar from '@/components/Navbar';
 
