@@ -3,55 +3,60 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 
-type Player = {
-  id: string;
-  name: string;
-  team?: string;
-  points?: number;
+type LeaderboardEntry = {
+  user_id: string;
+  total_points: number;
+  profiles: { first_name: string } | null;
 };
 
-export default function Scores() {
-  const [players, setPlayers] = useState<Player[]>([]);
+export default function ScoresPage() {
   const [loading, setLoading] = useState(true);
+  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
 
   useEffect(() => {
-    const fetchPlayers = async () => {
+    (async () => {
+      // On joint la table profiles pour avoir first_name
       const { data, error } = await supabase
-        .from('players')
-        .select('*')
-        .order('points', { ascending: false });
+        .from('user_points')
+        .select('user_id, total_points, profiles ( first_name )')
+        .order('total_points', { ascending: false });
 
       if (error) {
         console.error('Erreur Supabase :', error.message);
       } else {
-        setPlayers(data || []);
+        setEntries(data || []);
       }
-
       setLoading(false);
-    };
-
-    fetchPlayers();
+    })();
   }, []);
 
-  return (
-    <main className="min-h-screen bg-green-100 p-8">
-      <h1 className="text-3xl font-bold text-green-700 text-center mb-6">Classement des joueurs</h1>
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p>Chargement du classement…</p>
+      </div>
+    );
+  }
 
-      {loading ? (
-        <p className="text-center text-gray-600">Chargement...</p>
-      ) : players.length === 0 ? (
-        <p className="text-center text-gray-600">Aucun joueur inscrit pour l’instant.</p>
-      ) : (
-        <ul className="max-w-md mx-auto space-y-4">
-          {players.map((player) => (
-            <li key={player.id} className="bg-white p-4 rounded shadow">
-              <div className="text-xl font-semibold text-green-800">{player.name}</div>
-              {player.team && <div className="text-gray-600">Équipe : {player.team}</div>}
-              <div className="mt-2 text-sm text-gray-700">Points : {player.points ?? 0}</div>
+  return (
+    <div className="max-w-lg mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-4 text-center">Classement</h1>
+      <ul className="space-y-2">
+        {entries.map((e, i) => {
+          const name = e.profiles?.first_name ?? e.user_id;
+          return (
+            <li
+              key={e.user_id}
+              className="flex justify-between bg-bg-mid p-4 rounded"
+            >
+              <span>
+                #{i + 1} — {name}
+              </span>
+              <span className="font-semibold">{e.total_points} pts</span>
             </li>
-          ))}
-        </ul>
-      )}
-    </main>
+          );
+        })}
+      </ul>
+    </div>
   );
 }

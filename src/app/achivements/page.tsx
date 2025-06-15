@@ -1,42 +1,48 @@
+// src/app/achivements/page.tsx
 'use client';
 
 import Link from 'next/link';
 
 export default function AchivementsPage() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-purple-100 to-white p-8">
-      <div className="text-center mt-16">
-        <h1 className="text-4xl font-bold text-indigo-700 mb-8">
-          Réalisations et succès
-        </h1>
-
-        <p className="text-gray-600 mb-12 text-lg">
-          Choisis une catégorie pour découvrir les défis, points et trophées.
-        </p>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-          <Link href="/achivements/gaming">
-            <div className="bg-white p-6 rounded-lg shadow-md hover:bg-indigo-100 transition text-center">
-              <div className="text-5xl mb-2">🎮</div>
-              <h2 className="text-xl font-semibold text-indigo-700">Jeux</h2>
-            </div>
-          </Link>
-
-          <Link href="/achivements/sport">
-            <div className="bg-white p-6 rounded-lg shadow-md hover:bg-green-100 transition text-center">
-              <div className="text-5xl mb-2">🏃‍♂️</div>
-              <h2 className="text-xl font-semibold text-green-700">Sports</h2>
-            </div>
-          </Link>
-
-          <Link href="/achivements/culture">
-            <div className="bg-white p-6 rounded-lg shadow-md hover:bg-yellow-100 transition text-center">
-              <div className="text-5xl mb-2">📚</div>
-              <h2 className="text-xl font-semibold text-yellow-700">Culture générale</h2>
-            </div>
-          </Link>
+    <main className="flex flex-col md:flex-row h-screen w-screen overflow-hidden">
+      {/* eSport panel */}
+      <Link
+        href="/achivements/gaming"
+        className="flex-1 flex items-center justify-center bg-blue-900"
+      >
+        <div
+          className="
+            px-16 py-12 md:px-20 md:py-16 lg:px-24 lg:py-20
+            text-5xl md:text-7xl lg:text-8xl font-extrabold text-white rounded-md
+            bg-gradient-to-r from-cyan-400 to-blue-600
+            shadow-[0_0_12px_rgba(0,200,255,0.7),0_0_30px_rgba(0,200,255,0.5)]
+            hover:shadow-[0_0_30px_rgba(0,200,255,0.8),0_0_60px_rgba(0,200,255,0.6)]
+            transition-shadow duration-300
+          "
+        >
+          eSport
         </div>
-      </div>
+      </Link>
+
+      {/* Sport panel */}
+      <Link
+        href="/achivements/sport"
+        className="flex-1 flex items-center justify-center bg-green-900"
+      >
+        <div
+          className="
+            px-16 py-12 md:px-20 md:py-16 lg:px-24 lg:py-20
+            text-5xl md:text-7xl lg:text-8xl font-extrabold text-white rounded-md
+            bg-gradient-to-r from-green-400 to-green-600
+            shadow-[0_0_12px_rgba(72,255,120,0.7),0_0_30px_rgba(72,255,120,0.5)]
+            hover:shadow-[0_0_30px_rgba(72,255,120,0.8),0_0_60px_rgba(72,255,120,0.6)]
+            transition-shadow duration-300
+          "
+        >
+          Sport
+        </div>
+      </Link>
     </main>
   );
 }

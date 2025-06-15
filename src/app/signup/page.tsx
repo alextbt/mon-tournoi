@@ -1,15 +1,16 @@
+// src/app/signup/page.tsx
 'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 
-// Définition du type pour le style de profil incluant l'option neutre
 type ProfileStyle = 'Aucune modification' | 'Joueur' | 'Sportif';
 
-export default function Signup() {
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
+export default function SignupPage() {
+  const [firstName, setFirstName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [profileStyle, setProfileStyle] = useState<ProfileStyle>('Aucune modification');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
@@ -18,86 +19,155 @@ export default function Signup() {
     e.preventDefault();
     setErrorMessage(null);
 
-const { error } = await supabase.auth.signUp({
-  email,
-  password,
-  options: {
-    data: { profile_style: profileStyle }
-  }
-});
+    // 1) Création du compte
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { first_name: firstName, profile_style: profileStyle },
+      },
+    });
 
-    if (error) {
-      setErrorMessage(error.message);
-    } else {
-      router.push('/login');
+    if (signUpError) {
+      setErrorMessage(signUpError.message);
+      return;
     }
+
+    // 2) INSÉRER dans profiles si data.user.id est défini
+    const userId = data.user?.id;
+    const userEmail = data.user?.email;
+    if (userId && userEmail) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert([
+          {
+            id: userId,
+            email: userEmail,
+            first_name: firstName,
+            profile_style: profileStyle,
+          },
+        ]);
+      if (profileError) {
+        console.error('Erreur insert profiles:', profileError.message);
+      }
+    } else {
+      console.warn('SignUp réussi mais pas de user.id/email retourné.');
+    }
+
+    // 3) Redirection
+    router.push('/login');
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-white shadow-lg rounded-md mt-8">
-      <h1 className="text-2xl font-semibold mb-4">Créer un compte</h1>
-      {errorMessage && <p className="text-red-500 mb-4">{errorMessage}</p>}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Email */}
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium">
-            Email
-          </label>
-          <input
-            type="email"
-            id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="w-full p-2 border rounded-md"
-          />
-        </div>
+    <div className="bg-gradient-to-r from-purple-700 via-pink-600 to-red-500 py-20">
+      <div className="max-w-4xl mx-auto px-4 text-center">
+        <h1 className="text-4xl font-extrabold text-white mb-2">
+          Rejoignez le Grand Tournoi de l’Été
+        </h1>
+        <p className="text-lg text-white/90 mb-12">
+          Inscrivez-vous pour commencer à accumuler des points et relever des défis !
+        </p>
 
-        {/* Mot de passe */}
-        <div>
-          <label htmlFor="password" className="block text-sm font-medium">
-            Mot de passe
-          </label>
-          <input
-            type="password"
-            id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="w-full p-2 border rounded-md"
-          />
-        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 bg-white rounded-xl shadow-xl overflow-hidden">
+          {/* Formulaire */}
+          <div className="p-8 space-y-6">
+            {errorMessage && (
+              <p className="text-red-500 text-center">{errorMessage}</p>
+            )}
 
-        {/* Style de profil */}
-        <div>
-          <label htmlFor="profileStyle" className="block text-sm font-medium">
-            Style de profil
-            <span
-              className="ml-2 text-gray-500 cursor-help"
-              title="Choisir Joueur / Sportif augmente de 25% les points obtenus dans cette catégorie, mais réduit de 50% les points obtenus dans les autres catégories."
-            >
-              ?
-            </span>
-          </label>
-          <select
-            id="profileStyle"
-            value={profileStyle}
-            onChange={(e) => setProfileStyle(e.target.value as ProfileStyle)}
-            className="w-full p-2 border rounded-md"
-          >
-            <option value="Aucune modification">Aucune modification</option>
-            <option value="Joueur">Joueur</option>
-            <option value="Sportif">Sportif</option>
-          </select>
-        </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Prénom / Pseudo */}
+              <div>
+                <label htmlFor="firstName" className="block mb-1 text-sm font-medium text-gray-700">
+                  Prénom / Pseudo
+                </label>
+                <input
+                  id="firstName"
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                  placeholder="Ex : Alex"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
 
-        <button
-          type="submit"
-          className="w-full py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-        >
-          S&apos;inscrire
-        </button>
-      </form>
+              {/* Email */}
+              <div>
+                <label htmlFor="email" className="block mb-1 text-sm font-medium text-gray-700">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="exemple@mail.com"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+
+              {/* Mot de passe */}
+              <div>
+                <label htmlFor="password" className="block mb-1 text-sm font-medium text-gray-700">
+                  Mot de passe
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  placeholder="••••••••"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+
+              {/* Style de profil */}
+              <div>
+                <label htmlFor="profileStyle" className="block mb-1 text-sm font-medium text-gray-700">
+                  Style de profil
+                  <span
+                    className="ml-1 cursor-help text-gray-400"
+                    title="Joueur : +25% points Jeux. Sportif : +25% points Sports."
+                  >?</span>
+                </label>
+                <select
+                  id="profileStyle"
+                  value={profileStyle}
+                  onChange={(e) => setProfileStyle(e.target.value as ProfileStyle)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="Aucune modification">Aucune modification</option>
+                  <option value="Joueur">Joueur</option>
+                  <option value="Sportif">Sportif</option>
+                </select>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition"
+              >
+                S&apos;inscrire
+              </button>
+            </form>
+          </div>
+
+          {/* Bloc descriptif */}
+          <div className="p-8 bg-gray-50 space-y-6">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+              Pourquoi s’inscrire ?
+            </h2>
+            <ul className="space-y-3 text-gray-700">
+              <li>✔ Accès à votre profil personnalisé</li>
+              <li>✔ Enregistrement de vos réalisations et succès</li>
+              <li>✔ Classement en temps réel et challenges</li>
+              <li>✔ Bonus hebdomadaires à venir</li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
