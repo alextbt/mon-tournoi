@@ -1,62 +1,81 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import PageLayout from '@/components/PageLayout';
 
 type LeaderboardEntry = {
   user_id: string;
   total_points: number;
-  profiles: { first_name: string } | null;
+  first_name: string;
 };
 
 export default function ScoresPage() {
-  const [loading, setLoading] = useState(true);
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
-      // On joint la table profiles pour avoir first_name
+      // Récupère points + prénom (via relation profiles)
       const { data, error } = await supabase
         .from('user_points')
-        .select('user_id, total_points, profiles ( first_name )')
+        .select('user_id, total_points, profiles(first_name)')
         .order('total_points', { ascending: false });
 
       if (error) {
         console.error('Erreur Supabase :', error.message);
+        setEntries([]);
       } else {
-        setEntries(data || []);
+        // data est de type Array<{ user_id: string; total_points: number; profiles: { first_name: string }[] }>
+        const mapped: LeaderboardEntry[] = (data || []).map(row => ({
+          user_id: row.user_id,
+          total_points: row.total_points,
+          first_name: row.profiles[0]?.first_name ?? '—',
+        }));
+        setEntries(mapped);
       }
+
       setLoading(false);
     })();
   }, []);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p>Chargement du classement…</p>
-      </div>
+      <PageLayout title="Classement">
+        <p className="text-center py-16 text-white">Chargement…</p>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="max-w-lg mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4 text-center">Classement</h1>
-      <ul className="space-y-2">
-        {entries.map((e, i) => {
-          const name = e.profiles?.first_name ?? e.user_id;
-          return (
-            <li
-              key={e.user_id}
-              className="flex justify-between bg-bg-mid p-4 rounded"
-            >
-              <span>
-                #{i + 1} — {name}
-              </span>
-              <span className="font-semibold">{e.total_points} pts</span>
-            </li>
-          );
-        })}
-      </ul>
-    </div>
+    <PageLayout title="Classement">
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold text-white mb-6">Classement général</h1>
+
+        <table className="w-full table-auto text-left border-collapse">
+          <thead>
+            <tr className="border-b border-white/30">
+              <th className="py-2 px-4">#</th>
+              <th className="py-2 px-4">Prénom</th>
+              <th className="py-2 px-4">Points</th>
+            </tr>
+          </thead>
+          <tbody>
+            {entries.map((e, idx) => (
+              <tr
+                key={e.user_id}
+                className={idx % 2 === 0 ? 'bg-white/5' : 'bg-white/10'}
+              >
+                <td className="py-2 px-4 font-medium text-white">{idx + 1}</td>
+                <td className="py-2 px-4 text-white">{e.first_name}</td>
+                <td className="py-2 px-4 font-semibold text-accent-purple">
+                  {e.total_points}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </PageLayout>
   );
 }
