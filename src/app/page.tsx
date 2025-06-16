@@ -35,7 +35,7 @@ export default function HomePage() {
       <div className="relative z-10 flex flex-col items-center justify-center h-full px-4 md:px-8 lg:px-16 space-y-8 md:space-y-12">
         <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white text-center">Bienvenue au Grand Tournoi de l’Été</h1>
           <p className="text-lg text-white-700">
-            Trois domaines, un seul grand gagnant !
+            Deux domaines, un seul grand gagnant !
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
