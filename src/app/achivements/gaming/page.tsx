@@ -27,8 +27,8 @@ const GAMES: Game[] = [
     slug: 'valorant',
     bg: 'https://preview.redd.it/buzyn25jzr761.png?width=1000&format=png&auto=webp&s=c8a55973b52a27e003269914ed1a883849ce4bdc',
     difficulty: 'Facile',
-    totalPoints: 0,     // <— défini manuellement
-    successCount: 0,     // <— défini manuellement
+    totalPoints: 2225,     // <— défini manuellement
+    successCount: 34,     // <— défini manuellement
   },
 ];
 

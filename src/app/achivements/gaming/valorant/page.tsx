@@ -6,10 +6,24 @@ import { useRouter } from 'next/navigation';
 import PageLayout from '@/components/PageLayout';
 import { supabase } from '@/lib/supabaseClient';
 
+type Success = {
+  id: number;
+  title: string;
+  description: string;
+  points: number;
+};
+type UserSuccess = {
+  success_id: number;
+};
+
 export default function ValorantPage() {
   const [loading, setLoading] = useState(true);
 
-  // Récupération total parties
+  // Succès & validation
+  const [successes, setSuccesses] = useState<Success[]>([]);
+  const [doneIds, setDoneIds] = useState<Set<number>>(new Set());
+
+  // Total points parties
   const [totalGamePoints, setTotalGamePoints] = useState(0);
 
   // Enregistrement de la partie
@@ -46,7 +60,7 @@ export default function ValorantPage() {
       .upsert({ user_id: userId, total_points: newTotal }, { onConflict: 'user_id' });
   };
 
-  // Chargement initial du total points parties
+  // Chargement initial : session, total parties, succès, validations
   useEffect(() => {
     (async () => {
       const {
@@ -58,7 +72,7 @@ export default function ValorantPage() {
       }
       const userId = session.user.id;
 
-      // Total points sur game_records pour Valorant
+      // 1) Total points parties
       const { data: games } = await supabase
         .from('game_records')
         .select('points')
@@ -67,14 +81,80 @@ export default function ValorantPage() {
       const total = (games ?? []).reduce((sum, r) => sum + Math.max(r.points, 0), 0);
       setTotalGamePoints(total);
 
+      // 2) Charger les succès Valorant
+      const { data: rawSuccesses, error: sError } = await supabase
+        .from('successes')
+        .select('*')
+        .eq('category', 'Valorant');
+      if (sError) {
+        console.error('Erreur fetching successes :', sError.message);
+      } else {
+        setSuccesses(rawSuccesses);
+      }
+
+      // 3) Charger les succès déjà validés
+      const { data: rawUserSucc, error: usError } = await supabase
+        .from('user_successes')
+        .select('success_id')
+        .eq('user_id', userId);
+      if (usError) {
+        console.error('Erreur fetching user_successes :', usError.message);
+      } else {
+        setDoneIds(new Set((rawUserSucc as UserSuccess[]).map((u) => u.success_id)));
+      }
+
       setLoading(false);
     })();
   }, []);
 
+  // Valider un succès
+  const handleValidateSuccess = async (suc: Success) => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) return;
+
+    const { error: insErr } = await supabase
+      .from('user_successes')
+      .insert({ user_id: session.user.id, success_id: suc.id });
+    if (insErr) {
+      console.error('Erreur insertion user_successes :', insErr.message);
+      return;
+    }
+
+    await adjustPoints(suc.points);
+    setDoneIds((prev) => new Set(prev).add(suc.id));
+  };
+
+  // Annuler un succès
+  const handleUnvalidateSuccess = async (suc: Success) => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) return;
+
+    const { error: delErr } = await supabase
+      .from('user_successes')
+      .delete()
+      .eq('user_id', session.user.id)
+      .eq('success_id', suc.id);
+    if (delErr) {
+      console.error('Erreur delete user_successes :', delErr.message);
+      return;
+    }
+
+    await adjustPoints(-suc.points);
+    setDoneIds((prev) => {
+      const next = new Set(prev);
+      next.delete(suc.id);
+      return next;
+    });
+  };
+
   // Enregistrer une partie récente
   const handleRecordGame = async (e: React.FormEvent) => {
     e.preventDefault();
-    const delta = Math.max(kills - deaths, 0);
+    const delta = Math.max(kills - (deaths/2), 0);
     setLastGamePoints(delta);
 
     const {
@@ -95,6 +175,7 @@ export default function ValorantPage() {
     ]);
 
     await adjustPoints(delta);
+    setTotalGamePoints((prev) => prev + delta);
   };
 
   // Sauvegarder le nom Valorant
@@ -125,9 +206,7 @@ export default function ValorantPage() {
     return (
       <PageLayout
         title="Valorant – Réalisations & succès"
-        bgClass={`
-          bg-gradient-to-br from-[#111214] via-[#1f1f20] to-[#111214]
-        `}
+        bgClass="bg-gradient-to-br from-[#111214] via-[#1f1f20] to-[#111214]"
       >
         <p className="text-center text-white py-16">Chargement…</p>
       </PageLayout>
@@ -137,13 +216,11 @@ export default function ValorantPage() {
   return (
     <PageLayout
       title="Valorant – Réalisations & succès"
-      bgClass={`
-        bg-gradient-to-br from-[#111214] via-[#1f1f20] to-[#111214]
-      `}
+      bgClass="bg-gradient-to-br from-[#111214] via-[#1f1f20] to-[#111214]"
     >
       <div className="relative z-10 w-full flex flex-col md:flex-row gap-8 px-4 py-12">
         {/* Colonne gauche – Enregistrer partie & compte */}
-        <div className="w-full md:basis-3/5 flex flex-col gap-8">
+        <div className="w-full md:basis-2/5 flex flex-col gap-8">
           {/* Enregistrer une partie récente */}
           <section className="bg-black bg-opacity-50 backdrop-blur-sm ring-2 ring-red-500 p-8 rounded-xl shadow-xl">
             <h2 className="text-3xl font-semibold text-red-400 mb-6">
@@ -202,7 +279,7 @@ export default function ValorantPage() {
               </button>
             </form>
             <p className="mt-4 text-white/70 text-sm">
-              Points = <code>K – D</code> (seules les valeurs positives sont ajoutées).
+              Points = <code>K–(D/2)</code> (seules les valeurs positives sont ajoutées).
             </p>
             {lastGamePoints !== null && (
               <p className="mt-3 text-white">
@@ -238,12 +315,45 @@ export default function ValorantPage() {
           </section>
         </div>
 
-        {/* Colonne droite – Succès (à venir) */}
-        <section className="w-full md:basis-2/5 bg-black bg-opacity-50 backdrop-blur-sm ring-2 ring-red-500 p-8 rounded-xl shadow-xl">
+        {/* Colonne droite – Succès */}
+        <section className="w-full md:basis-3/5 bg-black bg-opacity-50 backdrop-blur-sm ring-2 ring-red-500 p-8 rounded-xl shadow-xl overflow-auto">
           <h2 className="text-3xl font-semibold text-red-400 mb-6">
             Succès VALORANT
           </h2>
-          <p className="text-white/70">Les succès arrivent bientôt !</p>
+          <ul className="space-y-4">
+            {successes.map((suc) => {
+              const done = doneIds.has(suc.id);
+              return (
+                <li
+                  key={suc.id}
+                  className="flex items-start justify-between bg-gray-800 p-4 rounded-lg"
+                >
+                  <div className="pr-4">
+                    <h3 className="font-semibold text-white">{suc.title}</h3>
+                    <p className="text-sm text-gray-400">{suc.description}</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    <span className="text-red-400 font-bold">+{suc.points} pts</span>
+                    {done ? (
+                      <button
+                        onClick={() => handleUnvalidateSuccess(suc)}
+                        className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 transition"
+                      >
+                        Annuler
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleValidateSuccess(suc)}
+                        className="px-4 py-2 rounded bg-red-500 text-white hover:bg-red-600 transition"
+                      >
+                        Valider
+                      </button>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
         </section>
       </div>
     </PageLayout>
