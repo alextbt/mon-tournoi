@@ -130,7 +130,7 @@ export default function SignupPage() {
                   Style de profil
                   <span
                     className="ml-1 cursor-help text-gray-400"
-                    title="Joueur : +25% points Jeux. Sportif : +25% points Sports."
+                    title="Joueur : +25% points Jeux, -25% points Sport. Sportif : +25% points Sports, -50% points Jeux."
                   >?</span>
                 </label>
                 <select

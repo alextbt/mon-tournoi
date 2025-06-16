@@ -13,7 +13,7 @@ export default function RoadmapPage() {
   // 1) Map des événements par date
   const events: Record<string, string> = {
     '2025-06-16': 'Ajout des catégories : « LOL », « VALORANT » et « Musculation ».',
-    '2025-06-17': 'Correction du tableau de classement.',
+    '2025-06-17': 'Correction du tableau de classement. Activation du bonus/malus de choix du profil (Joueur / Sportif).',
     '2025-06-18': 'Ajout de la catégorie « Escalade ».',
     '2025-06-19': 'Amélioration de la page « Musculation » : ajout d’exercices spécifiques.',
   };

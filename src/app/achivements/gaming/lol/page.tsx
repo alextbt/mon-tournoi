@@ -345,6 +345,7 @@ export default function LolPage() {
           <h2 className="text-3xl md:text-4xl font-semibold text-white mb-6">
             Succès LoL
           </h2>
+          <h3>Connectez vous pour voir ou valider les succès.</h3>
           <ul className="space-y-4">
             {successes.map(suc => {
               const done = doneIds.has(suc.id);
