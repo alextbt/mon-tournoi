@@ -39,6 +39,7 @@ export default function RoadmapPage() {
   return (
     <PageLayout title="Roadmap & MàJ">
       <div className="max-w-4xl mx-auto py-8 space-y-6">
+        <h2>Notez que les mises à jour prévues et annoncées sortent généralement au soir de la date prévue.</h2>
         {/* onglets */}
         <div className="flex border-b border-white/30">
           <button

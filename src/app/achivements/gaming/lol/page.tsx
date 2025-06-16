@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabaseClient';
 import PageLayout from '@/components/PageLayout';
 import Link from 'next/link';
 
+
 type Success = {
   id: number;
   category: string;
@@ -193,7 +194,7 @@ export default function LolPage() {
   // Enregistrer une partie récente
   const handleRecordGame = async (e: React.FormEvent) => {
     e.preventDefault();
-    const delta = Math.max(kills - deaths, 0);
+    const delta = Math.max(kills - (deaths / 2), 0);
     setLastGamePoints(delta);
 
     const {
@@ -228,9 +229,9 @@ export default function LolPage() {
 
   return (
     <PageLayout title="League of Legends – Réalisations & succès">
-      <div className="flex flex-col md:flex-row gap-8 px-4 py-12">
+      <div className="w-full flex flex-col md:flex-row gap-8 px-4 py-12">
         {/* Colonne gauche */}
-        <div className="w-full md:w-1/2 flex flex-col gap-8">
+        <div className="w-full md:basis-1/5 flex flex-col gap-8">
           {/* Enregistrer une partie récente */}
           <section className="bg-bg-mid p-8 rounded-lg shadow-lg">
             <h2 className="text-2xl font-semibold text-white mb-6">
@@ -289,7 +290,7 @@ export default function LolPage() {
               </button>
             </form>
             <p className="mt-4 text-white/70 text-sm">
-              Points = <code>K – D</code> (seules les valeurs positives sont ajoutées).
+              Points = <code>K–(D/2)</code> (seules les valeurs positives sont ajoutées).
             </p>
             {lastGamePoints !== null && (
               <p className="mt-3 text-white">
@@ -340,8 +341,10 @@ export default function LolPage() {
         </div>
 
         {/* Colonne droite – Succès */}
-        <section className="w-full md:w-1/2 bg-bg-mid p-6 rounded-lg shadow-lg overflow-auto">
-          <h2 className="text-2xl font-semibold text-white mb-4">Succès LoL</h2>
+        <section className="w-full md:basis-4/5 bg-bg-mid p-8 rounded-xl shadow-xl overflow-auto">
+          <h2 className="text-3xl md:text-4xl font-semibold text-white mb-6">
+            Succès LoL
+          </h2>
           <ul className="space-y-4">
             {successes.map(suc => {
               const done = doneIds.has(suc.id);

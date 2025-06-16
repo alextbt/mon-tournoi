@@ -52,7 +52,7 @@ export default function HomePage() {
           <div className="">
             <Link href="/rules">
               <button className="px-6 py-3 text-lg font-semibold rounded-full border-2 border-accent-pink text-accent-pink hover:bg-accent-pink/10 transition">
-                Règles et organisation du tournoi
+                Règles et informations du tournoi
               </button>
             </Link>
           </div>

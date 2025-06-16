@@ -1,38 +1,83 @@
+// src/app/achivements/sport/page.tsx
 'use client';
 
 import Link from 'next/link';
+import PageLayout from '@/components/PageLayout';
 
 type Sport = {
   name: string;
   slug: string;
-  emoji: string;
+  bg: string;
+  successCount: number;
 };
 
-const sports: Sport[] = [
-  { name: 'Course', slug: 'course', emoji: '🏃‍♂️' },
-  { name: 'Musculation', slug: 'musculation', emoji: '🏋️' },
-  { name: 'Escalade', slug: 'escalade', emoji: '🧗' },
+const SPORTS: Sport[] = [
+  {
+    name: 'Musculation',
+    slug: 'musculation',
+    // Un exemple de fond « musculation » — remplace-le si tu as ton propre visuel
+    bg: '🏋️',
+    successCount: 0,
+  },
 ];
 
 export default function SportHub() {
   return (
-    <main className="min-h-screen bg-green-50 p-8">
-      <h1 className="text-4xl font-bold text-green-700 text-center mb-10">
-        Sports – Succès
-      </h1>
+    <PageLayout title="Sports – Succès">
+      <div className="w-full px-4 py-12">
+        <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-8">
+          {SPORTS.map((sport) => {
+            // on choisit un anneau vert pour la muscu
+            const ringColor = 'ring-green-400';
+            const accentText = 'text-green-300';
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-        {sports.map((sport) => (
-          <Link key={sport.slug} href={`/achivements/sport/${sport.slug}`}>
-            <div className="bg-white rounded-xl shadow-md p-6 hover:bg-green-100 transition text-center">
-              <div className="text-5xl mb-2">{sport.emoji}</div>
-              <h2 className="text-xl font-bold text-green-800">{sport.name}</h2>
-              <p className="text-sm text-gray-600 mt-1">Succès disponibles : 0</p>
-              <p className="text-sm text-gray-600">Points max : 0</p>
-            </div>
-          </Link>
-        ))}
+            return (
+              <Link
+                key={sport.slug}
+                href={`/achivements/sport/${sport.slug}`}
+                className="block"
+              >
+                <div
+                  className="
+                    relative h-72 rounded-2xl overflow-hidden
+                    transition-transform transform hover:scale-105
+                    bg-center bg-cover
+                  "
+                  style={{ backgroundImage: `url(${sport.bg})` }}
+                >
+                  {/* overlay sombre */}
+                  <div className="absolute inset-0 bg-black/60" />
+
+                  {/* panneau d’infos */}
+                  <div
+                    className={`
+                      absolute bottom-4 left-4 right-4
+                      bg-black/50 backdrop-blur-sm
+                      ring-2 ${ringColor}
+                      p-5 rounded-lg
+                      flex flex-col gap-1
+                    `}
+                  >
+                    <h2 className={`text-2xl font-bold ${accentText}`}>
+                      {sport.name}
+                    </h2>
+                    <p className="text-sm text-white/80">
+                      Succès:{' '}
+                      <span className="font-semibold text-white">
+                        {sport.successCount}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+                {/* Sous-titre en dessous */}
+                <p className="mt-2 text-center text-white/70">
+                  L’exercice <strong>Course</strong> se trouve également dans la catégorie musculation
+                </p>
+              </Link>
+            );
+          })}
+        </div>
       </div>
-    </main>
+    </PageLayout>
   );
 }

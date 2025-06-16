@@ -1,3 +1,4 @@
+// src/app/profile/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -27,37 +28,26 @@ export default function ProfilePage() {
 
   useEffect(() => {
     (async () => {
-      // 1) Récupère la session
+      // 1) Vérifier la session
       const {
         data: { session },
         error: sessionErr,
       } = await supabase.auth.getSession();
-      console.log('session', session, sessionErr);
       if (sessionErr || !session) {
         router.replace('/login');
         return;
       }
       const userId = session.user.id;
 
-      // 2) Récupère le user complet (avec user_metadata)
-      const {
-        data: { user },
-        error: userErr,
-      } = await supabase.auth.getUser();
-      console.log('user', user, userErr);
-
-      // 3) Tenter d’utiliser le metadata
+      // 2) Récupérer le prénom
+      const { data: { user } } = await supabase.auth.getUser();
       let name = user?.user_metadata?.first_name;
-      console.log('from metadata', name);
-
-      // 4) Si metadata vide, on lit dans profiles
       if (!name) {
-        const { data: profRow, error: profErr } = await supabase
+        const { data: profRow } = await supabase
           .from('profiles')
           .select('first_name')
           .eq('id', userId)
           .maybeSingle();
-        console.log('profiles row', profRow, profErr);
         name = profRow?.first_name ?? '';
       }
       setFirstName(name);
@@ -79,34 +69,63 @@ export default function ProfilePage() {
         .gt('total_points', total);
       setRank((higherCount ?? 0) + 1);
 
-      // 5) Breakdown par catégorie (jointure manuelle)
+      // 5) Breakdown : SUCCESS + GAME_RECORDS + SPORT_RECORDS
+      const map: Record<string, number> = {};
+
+      //   a) Succès validés
       const { data: rawSucc } = await supabase
         .from('user_successes')
         .select('success_id')
         .eq('user_id', userId);
       const ids = (rawSucc as { success_id: number }[] | null)
         ?.map(r => r.success_id) || [];
-      if (ids.length) {
+      if (ids.length > 0) {
         const { data: succData, error: succErr } = await supabase
           .from('successes')
           .select('category, points')
           .in('id', ids);
         if (succErr) {
           console.error('Erreur successes:', succErr.message);
-          setBreakdown([]);
         } else {
-          const map: Record<string, number> = {};
           (succData as { category: string; points: number }[]).forEach(s => {
             map[s.category] = (map[s.category] || 0) + s.points;
           });
-          setBreakdown(
-            Object.entries(map).map(([category, points]) => ({
-              category,
-              points,
-            }))
-          );
         }
       }
+
+      //   b) Parties jouées (Valorant, LoL, etc.)
+      const { data: grData, error: grErr } = await supabase
+        .from('game_records')
+        .select('game, points')
+        .eq('user_id', userId);
+      if (grErr) {
+        console.error('Erreur game_records:', grErr.message);
+      } else {
+        (grData as { game: string; points: number }[]).forEach(r => {
+          map[r.game] = (map[r.game] || 0) + r.points;
+        });
+      }
+
+      //   c) Musculation (sport_records)
+      const { data: srData, error: srErr } = await supabase
+        .from('sport_records')
+        .select('category, points')
+        .eq('user_id', userId);
+      if (srErr) {
+        console.error('Erreur sport_records:', srErr.message);
+      } else {
+        (srData as { category: string; points: number }[]).forEach(r => {
+          map[r.category] = (map[r.category] || 0) + r.points;
+        });
+      }
+
+      // Transformer en tableau
+      setBreakdown(
+        Object.entries(map).map(([category, pts]) => ({
+          category,
+          points: pts,
+        }))
+      );
 
       // 6) Réalisations détaillées
       const { data: rawAch, error: achErr } = await supabase
@@ -144,7 +163,7 @@ export default function ProfilePage() {
   return (
     <main className="bg-dusk min-h-screen py-12 px-4">
       <div className="max-w-4xl mx-auto bg-bg-mid rounded-xl shadow-lg overflow-hidden">
-        {/* Header gradient */}
+        {/* Header */}
         <div className="relative bg-gradient-to-r from-purple-700 to-pink-600 p-8 flex items-center justify-between">
           <div className="flex items-baseline space-x-3">
             <h1 className="text-3xl font-bold text-white">{firstName}</h1>
@@ -158,27 +177,21 @@ export default function ProfilePage() {
           </button>
         </div>
 
-        {/* Stats top */}
+        {/* Stats globales */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-bg-mid p-6">
           <div className="text-center">
             <p className="text-sm text-white/70">Total des points</p>
-            <p className="text-2xl font-extrabold text-white">
-              {totalPoints}
-            </p>
+            <p className="text-2xl font-extrabold text-white">{totalPoints}</p>
           </div>
           <div className="text-center">
             <p className="text-sm text-white/70">Nombre de catégories</p>
-            <p className="text-2xl font-extrabold text-white">
-              {breakdown.length}
-            </p>
+            <p className="text-2xl font-extrabold text-white">{breakdown.length}</p>
           </div>
         </div>
 
-        {/* Breakdown */}
+        {/* Breakdown par catégorie */}
         <section className="bg-bg-light p-6 space-y-4">
-          <h2 className="text-xl font-semibold text-white mb-2">
-            Points par catégorie
-          </h2>
+          <h2 className="text-xl font-semibold text-white mb-2">Points par catégorie</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {breakdown.map(item => (
               <div
@@ -186,23 +199,17 @@ export default function ProfilePage() {
                 className="p-4 bg-bg-mid rounded-lg text-white text-center"
               >
                 <p className="font-medium">{item.category}</p>
-                <p className="mt-1 text-lg font-bold">
-                  {item.points} pts
-                </p>
+                <p className="mt-1 text-lg font-bold">{item.points} pts</p>
               </div>
             ))}
           </div>
         </section>
 
-        {/* Réalisations */}
+        {/* Réalisations validées */}
         <section className="bg-bg-mid p-6 space-y-4">
-          <h2 className="text-xl font-semibold text-white mb-2">
-            Réalisations validées
-          </h2>
+          <h2 className="text-xl font-semibold text-white mb-2">Réalisations validées</h2>
           {achievements.length === 0 ? (
-            <p className="text-white/70">
-              Aucune réalisation pour l’instant.
-            </p>
+            <p className="text-white/70">Aucune réalisation pour l’instant.</p>
           ) : (
             <ul className="space-y-3">
               {achievements.map(a => (
@@ -213,10 +220,7 @@ export default function ProfilePage() {
                   <div>
                     <p>{a.title}</p>
                     <p className="text-sm text-white/70">
-                      le{' '}
-                      {new Date(a.achieved_at).toLocaleDateString(
-                        'fr-FR'
-                      )}
+                      le {new Date(a.achieved_at).toLocaleDateString('fr-FR')}
                     </p>
                   </div>
                   <span className="font-semibold">+{a.points} pts</span>
