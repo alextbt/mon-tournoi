@@ -1,11 +1,9 @@
-// src/app/achivements/gaming/lol/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import PageLayout from '@/components/PageLayout';
 import Link from 'next/link';
-
 
 type Success = {
   id: number;
@@ -35,62 +33,17 @@ export default function LolPage() {
   const [lastGamePoints, setLastGamePoints] = useState<number | null>(null);
   const [totalGamePoints, setTotalGamePoints] = useState<number>(0);
 
-  // Ajuste le total de points dans user_points
-  const adjustPoints = async (delta: number) => {
-    const {
-      data: { session },
-      error: sessionErr,
-    } = await supabase.auth.getSession();
-    if (sessionErr) {
-      console.error('Erreur session Supabase :', sessionErr.message);
-      return;
-    }
-    if (!session) return;
-    const userId = session.user.id;
-
-    const { data: ptsData, error: fetchErr } = await supabase
-      .from('user_points')
-      .select('total_points')
-      .eq('user_id', userId)
-      .maybeSingle();
-    if (fetchErr) {
-      console.error('Erreur fetch user_points :', fetchErr.message);
-      return;
-    }
-    const oldTotal = ptsData?.total_points ?? 0;
-    const newTotal = oldTotal + delta;
-
-    const { error: upsertErr } = await supabase
-      .from('user_points')
-      .upsert(
-        { user_id: userId, total_points: newTotal },
-        { onConflict: 'user_id' }
-      );
-    if (upsertErr) {
-      console.error('Erreur upserting user_points :', upsertErr.message);
-    }
-  };
-
-  // Chargement initial : succès, validation, compte, total parties
   useEffect(() => {
-  (async () => {
-    // 0) Récupère la session
-    const {
-      data: { session },
-      error: sessionErr,
-    } = await supabase.auth.getSession();
-    if (sessionErr) {
-      console.error('Erreur session Supabase :', sessionErr.message);
-      setLoading(false);
-      return;
-    }
-    if (!session) {
-      setLoading(false);
-      return;
-    }
-    const userId = session.user.id;
+    (async () => {
+      // 0) Session
+      const { data: { session }, error: sessionErr } = await supabase.auth.getSession();
+      if (sessionErr || !session) {
+        setLoading(false);
+        return;
+      }
+      const userId = session.user.id;
 
-      // 1) Succès LoL
+      // 1) Charger tous les succès LoL
       const { data: rawSuccesses, error: sError } = await supabase
         .from('successes')
         .select('*')
@@ -100,10 +53,10 @@ export default function LolPage() {
         console.error('Erreur fetching successes :', sError.message);
         setSuccesses([]);
       } else {
-        setSuccesses(rawSuccesses);
+        setSuccesses(rawSuccesses!);
       }
 
-      // 2) Succès validés
+      // 2) Charger les succès validés
       const { data: rawUser, error: usError } = await supabase
         .from('user_successes')
         .select('success_id')
@@ -112,7 +65,8 @@ export default function LolPage() {
         console.error('Erreur fetching user_successes :', usError.message);
         setDoneIds(new Set());
       } else {
-        setDoneIds(new Set(rawUser.map((u: UserSuccess) => u.success_id)));
+        const doneSet = new Set(rawUser!.map((u: UserSuccess) => u.success_id));
+        setDoneIds(doneSet);
       }
 
       // 3) Compte LoL
@@ -125,65 +79,65 @@ export default function LolPage() {
       if (accErr) console.error('Erreur fetch user_game_accounts :', accErr.message);
       setAccount(accData?.account_name ?? '');
 
-          // 4) Total points parties — on interroge bien `game_records`
-    const { data: games, error: gameErr } = await supabase
-      .from('game_records')      // <-- Assure-toi que la table s'appelle exactement “game_records”
-      .select('points')
-      .eq('user_id', userId);    // <-- Assure-toi que la colonne est bien “user_id” dans cette table
+      // 4) Total points parties
+      const { data: games, error: gameErr } = await supabase
+        .from('game_records')
+        .select('points')
+        .eq('user_id', userId)
+        .eq('game', 'LoL');
+      let gamesTotal = 0;
+      if (gameErr) {
+        console.error('Erreur fetch game_records :', gameErr.message);
+      } else {
+        gamesTotal = (games ?? []).reduce(
+          (sum, rec) => sum + Math.max(rec.points, 0),
+          0
+        );
+      }
+      setTotalGamePoints(gamesTotal);
 
-    if (gameErr) {
-      console.error('Erreur fetch game_records :', gameErr.message);
-      setTotalGamePoints(0);
-    } else {
-      // On sait que `games` est Array<{ points: number }>
-      const total = (games ?? []).reduce(
-        (sum, record) => sum + Math.max(record.points, 0),
-        0
-      );
-      setTotalGamePoints(total);
-    }
+      // --- Calcul sous-total LoL ---
+      const successPts = rawSuccesses
+        ?.filter(s => doneIds.has(s.id))
+        .reduce((sum, s) => sum + s.points, 0) || 0;
+      const lolTotal = successPts + gamesTotal;
 
-    setLoading(false);
-  })();
-}, []);
+      // Upsert sub-total LoL en base
+      await supabase
+        .from('user_points')
+        .upsert(
+          { user_id: userId, lol_points: lolTotal },
+          { onConflict: 'user_id' }
+        );
 
-  // Valider un succès
+      setLoading(false);
+    })();
+  }, [doneIds]);
+
+  // Validation succès / annulation... (inchangé)
   const handleValidate = async (suc: Success) => {
     const {
       data: { session },
     } = await supabase.auth.getSession();
     if (!session) return;
 
-    const { error: insErr } = await supabase
+    await supabase
       .from('user_successes')
       .insert({ user_id: session.user.id, success_id: suc.id });
-    if (insErr) {
-      console.error('Erreur insertion user_successes :', insErr.message);
-      return;
-    }
-
-    await adjustPoints(suc.points);
     setDoneIds(prev => new Set(prev).add(suc.id));
   };
 
-  // Annuler un succès
   const handleUnvalidate = async (suc: Success) => {
     const {
       data: { session },
     } = await supabase.auth.getSession();
     if (!session) return;
 
-    const { error: delErr } = await supabase
+    await supabase
       .from('user_successes')
       .delete()
       .eq('user_id', session.user.id)
       .eq('success_id', suc.id);
-    if (delErr) {
-      console.error('Erreur delete user_successes :', delErr.message);
-      return;
-    }
-
-    await adjustPoints(-suc.points);
     setDoneIds(prev => {
       const next = new Set(prev);
       next.delete(suc.id);
@@ -191,10 +145,9 @@ export default function LolPage() {
     });
   };
 
-  // Enregistrer une partie récente
   const handleRecordGame = async (e: React.FormEvent) => {
     e.preventDefault();
-    const delta = Math.max(kills - (deaths / 2), 0);
+    const delta = Math.max(kills - deaths / 2, 0);
     setLastGamePoints(delta);
 
     const {
@@ -202,19 +155,11 @@ export default function LolPage() {
     } = await supabase.auth.getSession();
     if (!session) return;
 
-    const { error: recErr } = await supabase
-      .from('game_records')               // <— remplacer `achievements`
+    await supabase
+      .from('game_records')
       .insert([
-        {
-          user_id: session.user.id,
-          player_first_name: playerName,
-          character_name: character,
-          k: kills,
-          d: deaths,
-          points: delta,
-        },
+        { user_id: session.user.id, game: 'LoL', points: delta }
       ]);
-    if (recErr) console.error('Erreur insertion game_records :', recErr.message);
 
     setTotalGamePoints(prev => prev + delta);
   };
@@ -338,6 +283,24 @@ export default function LolPage() {
             </button>
             {msg && <p className="mt-3 text-green-300">{msg}</p>}
           </section>
+
+          {/* Nouveau : Sous-total LoL */}
+<section className="bg-bg-mid p-6 rounded-lg shadow-lg">
+  <h2 className="text-lg font-semibold text-white mb-2">Sous-total LoL</h2>
+  <p className="text-2xl font-bold text-white">
+    {/* Additionne ici tes points de succès validés + totalGamePoints */}
+    {doneIds.size > 0
+      ? Array.from(doneIds).reduce(
+          (sum, id) =>
+            sum +
+            (successes.find(suc => suc.id === id)?.points || 0),
+          totalGamePoints
+        )
+      : totalGamePoints
+    } pts
+  </p>
+</section>
+
         </div>
 
         {/* Colonne droite – Succès */}

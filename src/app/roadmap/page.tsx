@@ -13,9 +13,10 @@ export default function RoadmapPage() {
   // 1) Map des événements par date
   const events: Record<string, string> = {
     '2025-06-16': 'Ajout des catégories : « LOL », « VALORANT » et « Musculation ».',
-    '2025-06-17': 'Correction du tableau de classement. Activation du bonus/malus de choix du profil (Joueur / Sportif).',
+    '2025-06-17': 'Correction du tableau de classement. Activation du bonus/malus de choix du profil (Joueur / Sportif). Ajout du calcul des points dans la catégorie Musculation. Ajout du bouton des demandes.',
     '2025-06-18': 'Ajout de la catégorie « Escalade ».',
-    '2025-06-19': 'Amélioration de la page « Musculation » : ajout d’exercices spécifiques.',
+    '2025-06-19': 'Amélioration de la page « Musculation » : ajout d’exercices spécifiques et de réalisation spéciales (poids lourds).',
+    '2025-06-21': 'Ajout du jeu TFT. Ajout de la catégorie événements limités.'
   };
 
   // 2) Génère toutes les dates entre deux bornes incluses

@@ -1,4 +1,3 @@
-// src/app/achivements/gaming/valorant/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -33,39 +32,19 @@ export default function ValorantPage() {
   const [deaths, setDeaths] = useState(0);
   const [lastGamePoints, setLastGamePoints] = useState<number | null>(null);
 
+  // Sous-total Valorant
+  const [subTotalValorant, setSubTotalValorant] = useState(0);
+
   // Enregistrement du nom Valorant
   const [account, setAccount] = useState('');
   const [msg, setMsg] = useState('');
 
   const router = useRouter();
 
-  // Ajuste le total de points dans user_points
-  const adjustPoints = async (delta: number) => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session) return;
-    const userId = session.user.id;
-
-    const { data: ptsData } = await supabase
-      .from('user_points')
-      .select('total_points')
-      .eq('user_id', userId)
-      .maybeSingle();
-    const oldTotal = ptsData?.total_points ?? 0;
-    const newTotal = oldTotal + delta;
-
-    await supabase
-      .from('user_points')
-      .upsert({ user_id: userId, total_points: newTotal }, { onConflict: 'user_id' });
-  };
-
-  // Chargement initial : session, total parties, succès, validations
+  // Chargement initial : session, parties, succès, validations
   useEffect(() => {
     (async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         setLoading(false);
         return;
@@ -73,13 +52,14 @@ export default function ValorantPage() {
       const userId = session.user.id;
 
       // 1) Total points parties
-      const { data: games } = await supabase
+      const { data: games, error: gameErr } = await supabase
         .from('game_records')
         .select('points')
         .eq('user_id', userId)
         .eq('game', 'Valorant');
-      const total = (games ?? []).reduce((sum, r) => sum + Math.max(r.points, 0), 0);
-      setTotalGamePoints(total);
+      if (gameErr) console.error('Erreur fetch game_records :', gameErr.message);
+      const gamesTotal = (games ?? []).reduce((sum, r) => sum + Math.max(r.points, 0), 0);
+      setTotalGamePoints(gamesTotal);
 
       // 2) Charger les succès Valorant
       const { data: rawSuccesses, error: sError } = await supabase
@@ -89,10 +69,10 @@ export default function ValorantPage() {
       if (sError) {
         console.error('Erreur fetching successes :', sError.message);
       } else {
-        setSuccesses(rawSuccesses);
+        setSuccesses(rawSuccesses!);
       }
 
-      // 3) Charger les succès déjà validés
+      // 3) Succès validés
       const { data: rawUserSucc, error: usError } = await supabase
         .from('user_successes')
         .select('success_id')
@@ -100,103 +80,87 @@ export default function ValorantPage() {
       if (usError) {
         console.error('Erreur fetching user_successes :', usError.message);
       } else {
-        setDoneIds(new Set((rawUserSucc as UserSuccess[]).map((u) => u.success_id)));
+        setDoneIds(new Set((rawUserSucc as UserSuccess[]).map(u => u.success_id)));
       }
+
+      // 4) Calcul sous-total Valorant
+      const successPts = (rawSuccesses ?? [])
+        .filter(suc => doneIds.has(suc.id))
+        .reduce((sum, suc) => sum + suc.points, 0);
+      const valorantTotal = successPts + gamesTotal;
+      setSubTotalValorant(valorantTotal);
+
+      // 5) Upsert sous-total Valorant en BDD
+      await supabase
+        .from('user_points')
+        .upsert(
+          { user_id: userId, valorant_points: valorantTotal },
+          { onConflict: 'user_id' }
+        );
 
       setLoading(false);
     })();
-  }, []);
+  }, [doneIds]);
 
-  // Valider un succès
+  // Valider ou annuler un succès
   const handleValidateSuccess = async (suc: Success) => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
-
-    const { error: insErr } = await supabase
+    await supabase
       .from('user_successes')
       .insert({ user_id: session.user.id, success_id: suc.id });
-    if (insErr) {
-      console.error('Erreur insertion user_successes :', insErr.message);
-      return;
-    }
-
-    await adjustPoints(suc.points);
-    setDoneIds((prev) => new Set(prev).add(suc.id));
+    setDoneIds(prev => new Set(prev).add(suc.id));
   };
 
-  // Annuler un succès
   const handleUnvalidateSuccess = async (suc: Success) => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
-
-    const { error: delErr } = await supabase
+    await supabase
       .from('user_successes')
       .delete()
       .eq('user_id', session.user.id)
       .eq('success_id', suc.id);
-    if (delErr) {
-      console.error('Erreur delete user_successes :', delErr.message);
-      return;
-    }
-
-    await adjustPoints(-suc.points);
-    setDoneIds((prev) => {
-      const next = new Set(prev);
-      next.delete(suc.id);
-      return next;
-    });
+    setDoneIds(prev => { const next = new Set(prev); next.delete(suc.id); return next; });
   };
 
   // Enregistrer une partie récente
   const handleRecordGame = async (e: React.FormEvent) => {
     e.preventDefault();
-    const delta = Math.max(kills - (deaths/2), 0);
+    const delta = Math.max(kills - (deaths / 2), 0);
     setLastGamePoints(delta);
-
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
-
-    await supabase.from('game_records').insert([
-      {
-        user_id: session.user.id,
-        player_first_name: playerName,
-        character_name: agent,
-        k: kills,
-        d: deaths,
-        points: delta,
-        game: 'Valorant',
-      },
-    ]);
-
-    await adjustPoints(delta);
-    setTotalGamePoints((prev) => prev + delta);
+    await supabase
+      .from('game_records')
+      .insert([
+        {
+          user_id: session.user.id,
+          player_first_name: playerName,
+          character_name: agent,
+          k: kills,
+          d: deaths,
+          points: delta,
+          game: 'Valorant',
+        },
+      ]);
+    setTotalGamePoints(prev => prev + delta);
   };
 
   // Sauvegarder le nom Valorant
   const handleSaveAccount = async () => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       router.replace('/login');
       return;
     }
-
     const { error } = await supabase
       .from('user_game_accounts')
       .upsert(
         { user_id: session.user.id, game: 'Valorant', account_name: account },
         { onConflict: 'user_id,game' }
       );
-    if (error) {
-      console.error('Erreur upsert account Valorant:', error.message);
-    } else {
+    if (error) console.error('Erreur upsert account Valorant:', error.message);
+    else {
       setMsg('Nom VALORANT enregistré !');
       setTimeout(() => setMsg(''), 3000);
     }
@@ -218,8 +182,8 @@ export default function ValorantPage() {
       title="Valorant – Réalisations & succès"
       bgClass="bg-gradient-to-br from-[#111214] via-[#1f1f20] to-[#111214]"
     >
-      <div className="relative z-10 w-full flex flex-col md:flex-row gap-8 px-4 py-12">
-        {/* Colonne gauche – Enregistrer partie & compte */}
+      <div className="relative w-full flex flex-col md:flex-row gap-8 px-4 py-12">
+        {/* Colonne gauche – Partie & compte */}
         <div className="w-full md:basis-2/5 flex flex-col gap-8">
           {/* Enregistrer une partie récente */}
           <section className="bg-black bg-opacity-50 backdrop-blur-sm ring-2 ring-red-500 p-8 rounded-xl shadow-xl">
@@ -232,7 +196,7 @@ export default function ValorantPage() {
                 <input
                   type="text"
                   value={playerName}
-                  onChange={(e) => setPlayerName(e.target.value)}
+                  onChange={e => setPlayerName(e.target.value)}
                   required
                   placeholder="Ex : Alex"
                   className="w-full p-3 rounded bg-gray-800 text-white focus:outline-none"
@@ -243,7 +207,7 @@ export default function ValorantPage() {
                 <input
                   type="text"
                   value={agent}
-                  onChange={(e) => setAgent(e.target.value)}
+                  onChange={e => setAgent(e.target.value)}
                   required
                   placeholder="Ex : Jett"
                   className="w-full p-3 rounded bg-gray-800 text-white focus:outline-none"
@@ -255,7 +219,7 @@ export default function ValorantPage() {
                   <input
                     type="number"
                     value={kills}
-                    onChange={(e) => setKills(+e.target.value)}
+                    onChange={e => setKills(+e.target.value)}
                     min={0}
                     className="w-full p-3 rounded bg-gray-800 text-white focus:outline-none"
                   />
@@ -265,7 +229,7 @@ export default function ValorantPage() {
                   <input
                     type="number"
                     value={deaths}
-                    onChange={(e) => setDeaths(+e.target.value)}
+                    onChange={e => setDeaths(+e.target.value)}
                     min={0}
                     className="w-full p-3 rounded bg-gray-800 text-white focus:outline-none"
                   />
@@ -300,7 +264,7 @@ export default function ValorantPage() {
               <input
                 type="text"
                 value={account}
-                onChange={(e) => setAccount(e.target.value)}
+                onChange={e => setAccount(e.target.value)}
                 placeholder="Ex : Jett#1234"
                 className="flex-1 p-3 rounded bg-gray-800 text-white focus:outline-none"
               />
@@ -313,6 +277,14 @@ export default function ValorantPage() {
             </div>
             {msg && <p className="mt-3 text-red-300">{msg}</p>}
           </section>
+
+          {/* Nouveau : Sous-total Valorant */}
+          <section className="bg-black bg-opacity-50 backdrop-blur-sm ring-2 ring-red-500 p-6 rounded-xl shadow-xl">
+            <h3 className="text-xl font-medium text-red-400 mb-2">
+              Sous-total Valorant
+            </h3>
+            <p className="text-2xl font-bold text-white">{subTotalValorant} pts</p>
+          </section>
         </div>
 
         {/* Colonne droite – Succès */}
@@ -320,8 +292,9 @@ export default function ValorantPage() {
           <h2 className="text-3xl font-semibold text-red-400 mb-6">
             Succès VALORANT
           </h2>
+          <h3>Connectez vous pour voir ou valider les succès.</h3>
           <ul className="space-y-4">
-            {successes.map((suc) => {
+            {successes.map(suc => {
               const done = doneIds.has(suc.id);
               return (
                 <li

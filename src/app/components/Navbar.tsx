@@ -1,12 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 
 export default function Navbar() {
   const [userSession, setUserSession] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [achieveOpen, setAchieveOpen] = useState(false);
+  const achieveRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) =>
@@ -18,28 +20,59 @@ export default function Navbar() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  // Ferme le menu mobile puis navigue
-  const handleNavClick = () => {
-    setMenuOpen(false);
-  };
+  // close achievements dropdown when clicking outside
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (achieveRef.current && !achieveRef.current.contains(e.target as Node)) {
+        setAchieveOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  const handleNavClick = () => setMenuOpen(false);
 
   return (
     <header className="sticky top-0 w-full bg-black bg-opacity-50 backdrop-blur-md text-white px-6 py-4 flex items-center justify-between z-50">
-      {/* Left: Logo + Desktop nav */}
       <div className="flex items-center space-x-8">
         <Link href="/" className="text-2xl font-extrabold text-accent-purple drop-shadow-neon">
           GTE | v1.0
         </Link>
-        <nav className="hidden md:flex space-x-4">
+        {/* Desktop nav */}
+        <nav className="hidden md:flex space-x-4 items-center">
           <Link href="/scores" className="btn-nav text-sm">Classement</Link>
-          <Link href="/achivements" className="btn-nav text-sm">Réalisations & succès</Link>
+          <div className="relative" ref={achieveRef}>
+            <button
+              onClick={() => setAchieveOpen(o => !o)}
+              className="btn-nav text-sm flex items-center"
+            >
+              Réalisations & succès
+              <span className="ml-1">▾</span>
+            </button>
+            {achieveOpen && (
+              <div className="absolute mt-2 bg-black bg-opacity-50 backdrop-blur-md rounded-lg py-2 w-48">
+                <div className="px-2 text-xs text-gray-400 uppercase">eSport</div>
+                <Link href="/achivements/gaming/lol" className="block px-4 py-1 hover:bg-bg-light" onClick={() => setAchieveOpen(false)}>
+                  League of Legends
+                </Link>
+                <Link href="/achivements/gaming/valorant" className="block px-4 py-1 hover:bg-bg-light" onClick={() => setAchieveOpen(false)}>
+                  Valorant
+                </Link>
+                <div className="border-t border-gray-700 my-1"></div>
+                <div className="px-2 text-xs text-gray-400 uppercase">Sport</div>
+                <Link href="/achivements/sport/musculation" className="block px-4 py-1 hover:bg-bg-light" onClick={() => setAchieveOpen(false)}>
+                  Musculation
+                </Link>
+              </div>
+            )}
+          </div>
           <Link href="/rules" className="btn-nav text-sm">Règles</Link>
           <Link href="/roadmap" className="btn-nav text-sm">Roadmap</Link>
+          <Link href="/issues" className="btn-nav text-sm">Aide</Link>
           <Link href="https://discord.gg/mFwggMsqPx" className="btn-nav text-sm">Discord</Link>
         </nav>
       </div>
-
-      {/* Right: Desktop profile/login + Mobile hamburger */}
       <div className="flex items-center">
         <Link
           href={userSession ? '/profile' : '/login'}
@@ -47,7 +80,6 @@ export default function Navbar() {
         >
           {userSession ? 'Mon profil' : 'Se connecter'}
         </Link>
-
         <button
           onClick={() => setMenuOpen(open => !open)}
           className="md:hidden ml-2 p-2 rounded focus:outline-none"
@@ -63,7 +95,6 @@ export default function Navbar() {
           )}
         </button>
       </div>
-
       {/* Mobile dropdown */}
       {menuOpen && (
         <div className="md:hidden absolute top-full left-0 w-full bg-black bg-opacity-50 backdrop-blur-md py-4 z-40">
@@ -71,14 +102,23 @@ export default function Navbar() {
             <Link href="/scores" className="btn-nav text-sm block" onClick={handleNavClick}>
               Classement
             </Link>
-            <Link href="/achivements" className="btn-nav text-sm block" onClick={handleNavClick}>
-              Réalisations & succès
+            <Link href="/achivements/gaming/lol" className="btn-nav text-sm block" onClick={handleNavClick}>
+              League of Legends
+            </Link>
+            <Link href="/achivements/gaming/valorant" className="btn-nav text-sm block" onClick={handleNavClick}>
+              Valorant 
+            </Link>
+            <Link href="/achivements/sport/musculation" className="btn-nav text-sm block" onClick={handleNavClick}>
+              Musculation 
             </Link>
             <Link href="/rules" className="btn-nav text-sm block" onClick={handleNavClick}>
               Règles
             </Link>
             <Link href="/roadmap" className="btn-nav text-sm block" onClick={handleNavClick}>
               Roadmap
+            </Link>
+            <Link href="/issues" className="btn-nav text-sm block" onClick={handleNavClick}>
+              Aide
             </Link>
             <Link href="https://discord.gg/mFwggMsqPx" className="btn-nav text-sm block" onClick={handleNavClick}>
               Discord

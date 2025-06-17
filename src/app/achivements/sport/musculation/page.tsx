@@ -74,6 +74,7 @@ const EXERCISES: Record<Exclude<Tab, 'Course'>, string[]> = {
 };
 
 export default function MusculationPage() {
+  const [subTotalMusculation, setSubTotalMusculation] = useState(0);
   const [tab, setTab] = useState<Tab>('Pecs');
   const [exercise, setExercise] = useState('');
   const [weight, setWeight] = useState(0);
@@ -147,7 +148,16 @@ export default function MusculationPage() {
       if (!error) {
         const sum = (data || []).reduce((acc, r) => acc + (r.points || 0), 0);
         setTotalPartPoints(sum);
-      }
+           // Charger sous-total Musculation (toutes parties)
+     const { data: allData, error: allErr } = await supabase
+       .from('sport_records')
+       .select('points')
+       .eq('user_id', userId)
+       .eq('category', 'Musculation');
+     if (!allErr) {
+       const totalMuscu = (allData || []).reduce((acc, r) => acc + (r.points || 0), 0);
+       setSubTotalMusculation(totalMuscu);
+     }}
     })();
   }, [tab, msg]);
 
@@ -233,6 +243,11 @@ export default function MusculationPage() {
         <h2 className="text-3xl font-bold text-white text-center">
           Enregistrer un exercice
         </h2>
+
+        {/* Nouveau : Sous-total Musculation */}
+       <h3 className="text-center text-white/70">
+         Sous-total Musculation : <span className="font-semibold">{subTotalMusculation} pts</span>
+       </h3>
 
         <p className="text-center text-white/80">
           Total {tab} : <span className="font-semibold">{totalPartPoints} pts</span>

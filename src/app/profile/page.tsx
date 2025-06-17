@@ -1,4 +1,3 @@
-// src/app/profile/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -21,6 +20,8 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [firstName, setFirstName] = useState('');
   const [totalPoints, setTotalPoints] = useState(0);
+  const [subTotalEsport, setSubTotalEsport] = useState(0);
+  const [subTotalSport, setSubTotalSport] = useState(0);
   const [rank, setRank] = useState<number>(0);
   const [breakdown, setBreakdown] = useState<BreakdownItem[]>([]);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
@@ -28,120 +29,78 @@ export default function ProfilePage() {
 
   useEffect(() => {
     (async () => {
-      // 1) Vérifier la session
-      const {
-        data: { session },
-        error: sessionErr,
-      } = await supabase.auth.getSession();
+      // 1) Vérifier session
+      const { data: { session }, error: sessionErr } = await supabase.auth.getSession();
       if (sessionErr || !session) {
         router.replace('/login');
         return;
       }
       const userId = session.user.id;
 
-      // 2) Récupérer le prénom
-      const { data: { user } } = await supabase.auth.getUser();
-      let name = user?.user_metadata?.first_name;
-      if (!name) {
-        const { data: profRow } = await supabase
-          .from('profiles')
-          .select('first_name')
-          .eq('id', userId)
-          .maybeSingle();
-        name = profRow?.first_name ?? '';
-      }
-      setFirstName(name);
+      // 2) Prénom depuis profiles
+      const { data: profRow, error: profErr } = await supabase
+        .from('profiles')
+        .select('first_name')
+        .eq('id', userId)
+        .maybeSingle();
+      if (profErr) console.error('Erreur profile:', profErr.message);
+      setFirstName(profRow?.first_name ?? 'Utilisateur');
 
-      // 3) Total des points
+      // 3) Récupérer sous-totaux et total en une requête
       const { data: ptsData, error: ptsErr } = await supabase
         .from('user_points')
-        .select('total_points')
+        .select(
+          'lol_points, valorant_points, musculation_points, esports_points, sport_points, total_points'
+        )
         .eq('user_id', userId)
         .maybeSingle();
-      if (ptsErr) console.error('Erreur points:', ptsErr.message);
-      const total = ptsData?.total_points ?? 0;
-      setTotalPoints(total);
+      if (ptsErr) console.error('Erreur user_points:', ptsErr.message);
+      const {
+        lol_points = 0,
+        valorant_points = 0,
+        musculation_points = 0,
+        esports_points = 0,
+        sport_points = 0,
+        total_points = 0,
+      } = ptsData || {};
 
-      // 4) Calcul du rang
+      // 4) Mettre à jour états
+      setTotalPoints(total_points);
+      setSubTotalEsport(esports_points);
+      setSubTotalSport(sport_points);
+      setBreakdown([
+        { category: 'LoL', points: lol_points },
+        { category: 'Valorant', points: valorant_points },
+        { category: 'Musculation', points: musculation_points },
+      ]);
+
+      // 5) Récupérer rang
       const { count: higherCount } = await supabase
         .from('user_points')
         .select('*', { head: true, count: 'exact' })
-        .gt('total_points', total);
+        .gt('total_points', total_points);
       setRank((higherCount ?? 0) + 1);
 
-      // 5) Breakdown : SUCCESS + GAME_RECORDS + SPORT_RECORDS
-      const map: Record<string, number> = {};
+// 6) Réalisations détaillées
+const { data: rawAch, error: achErr } = await supabase
+  .from('user_achievements')
+  .select('achievement_id, achieved_at, achievements ( title, points )')
+  .eq('user_id', userId);
+if (achErr) console.error('Erreur achievements:', achErr.message);
 
-      //   a) Succès validés
-      const { data: rawSucc } = await supabase
-        .from('user_successes')
-        .select('success_id')
-        .eq('user_id', userId);
-      const ids = (rawSucc as { success_id: number }[] | null)
-        ?.map(r => r.success_id) || [];
-      if (ids.length > 0) {
-        const { data: succData, error: succErr } = await supabase
-          .from('successes')
-          .select('category, points')
-          .in('id', ids);
-        if (succErr) {
-          console.error('Erreur successes:', succErr.message);
-        } else {
-          (succData as { category: string; points: number }[]).forEach(s => {
-            map[s.category] = (map[s.category] || 0) + s.points;
-          });
-        }
-      }
-
-      //   b) Parties jouées (Valorant, LoL, etc.)
-      const { data: grData, error: grErr } = await supabase
-        .from('game_records')
-        .select('game, points')
-        .eq('user_id', userId);
-      if (grErr) {
-        console.error('Erreur game_records:', grErr.message);
-      } else {
-        (grData as { game: string; points: number }[]).forEach(r => {
-          map[r.game] = (map[r.game] || 0) + r.points;
-        });
-      }
-
-      //   c) Musculation (sport_records)
-      const { data: srData, error: srErr } = await supabase
-        .from('sport_records')
-        .select('category, points')
-        .eq('user_id', userId);
-      if (srErr) {
-        console.error('Erreur sport_records:', srErr.message);
-      } else {
-        (srData as { category: string; points: number }[]).forEach(r => {
-          map[r.category] = (map[r.category] || 0) + r.points;
-        });
-      }
-
-      // Transformer en tableau
-      setBreakdown(
-        Object.entries(map).map(([category, pts]) => ({
-          category,
-          points: pts,
-        }))
-      );
-
-      // 6) Réalisations détaillées
-      const { data: rawAch, error: achErr } = await supabase
-        .from('user_achievements')
-        .select('achievement_id, achieved_at, achievements ( title, points )')
-        .eq('user_id', userId);
-      if (achErr) console.error('Erreur achievements:', achErr.message);
-      setAchievements(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (rawAch as any[] | null || []).map(u => ({
-          id: u.achievement_id,
-          title: u.achievements.title,
-          points: u.achievements.points,
-          achieved_at: u.achieved_at,
-        }))
-      );
+setAchievements(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (rawAch || []).map((u: any) => {
+    // Supabase renvoie `achievements` sous forme de tableau, on prend le premier élément
+    const ach = Array.isArray(u.achievements) ? u.achievements[0] : u.achievements;
+    return {
+      id: u.achievement_id,
+      title: ach?.title ?? '—',
+      points: ach?.points ?? 0,
+      achieved_at: u.achieved_at,
+    };
+  })
+);
 
       setLoading(false);
     })();
@@ -178,11 +137,19 @@ export default function ProfilePage() {
         </div>
 
         {/* Stats globales */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-bg-mid p-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-bg-mid p-6">
           <div className="text-center">
             <p className="text-sm text-white/70">Total des points</p>
             <p className="text-2xl font-extrabold text-white">{totalPoints}</p>
           </div>
+
+          <div className="text-center space-y-1">
+            <p className="text-sm text-white/70">Sous-total eSport</p>
+            <p className="text-xl font-bold text-white">{subTotalEsport}</p>
+            <p className="text-sm text-white/70 mt-2">Sous-total Sport</p>
+            <p className="text-xl font-bold text-white">{subTotalSport}</p>
+          </div>
+
           <div className="text-center">
             <p className="text-sm text-white/70">Nombre de catégories</p>
             <p className="text-2xl font-extrabold text-white">{breakdown.length}</p>
