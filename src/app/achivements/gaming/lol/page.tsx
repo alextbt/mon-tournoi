@@ -127,13 +127,50 @@ export default function LolPage() {
     e.preventDefault();
     const delta = Math.max(kills - deaths / 2, 0);
     setLastGamePoints(delta);
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
+
+    // 1) Récupérer la session et userId
+    const { data: { session }, error: sessionErr } = await supabase.auth.getSession();
+    if (sessionErr || !session) {
+      console.error('Erreur session Supabase :', sessionErr?.message);
+      return;
+    }
     const userId = session.user.id;
-    await supabase
+
+    // 2) Insérer une nouvelle partie avec tous les champs non null
+    const { data: inserted, error: recErr } = await supabase
       .from('game_records')
-      .insert([{ user_id: userId, game: 'LoL', points: delta }]);
-    setTotalGamePoints(prev => prev + delta);
+      .insert([
+        {
+          user_id: userId,
+          player_first_name: playerName || '',
+          character_name: character || '',
+          k: kills,
+          d: deaths,
+          game: 'LoL',
+          points: delta,
+        },
+      ]);
+    if (recErr) {
+      console.error('Erreur insertion game_records :', recErr.message);
+      return;
+    }
+    console.log('Partie insérée :', inserted);
+
+    // 3) Re-fetch pour avoir le total à jour
+    const { data: gamesAfter, error: fetchErr } = await supabase
+      .from('game_records')
+      .select('points')
+      .eq('user_id', userId)
+      .eq('game', 'LoL');
+    if (fetchErr) {
+      console.error('Erreur fetch game_records après insert :', fetchErr.message);
+      return;
+    }
+    const newTotal = (gamesAfter || []).reduce(
+      (sum, rec) => sum + Math.max(rec.points, 0),
+      0
+    );
+    setTotalGamePoints(newTotal);
   };
 
   if (loading) {

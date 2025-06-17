@@ -37,8 +37,6 @@ export default function HomePage() {
           <p className="text-lg text-white-700">
             Deux domaines, un seul grand gagnant !
           </p>
-        <h2 className="text-pink-950 md:text-4xl font-extrabold text-center">L&apos;enregistrement de parties LOL est indisponible jusqu&apos;au 18 juin.</h2>
-
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
             <Link href="/signup">
               <button className="btn-neon w-full sm:w-auto">S’inscrire au tournoi</button>
