@@ -16,16 +16,10 @@ type UserSuccess = { success_id: number };
 
 export default function LolPage() {
   const [loading, setLoading] = useState(true);
-
-  // Succès et état
   const [successes, setSuccesses] = useState<Success[]>([]);
   const [doneIds, setDoneIds] = useState<Set<number>>(new Set());
-
-  // Compte LoL
   const [account, setAccount] = useState('');
   const [msg, setMsg] = useState('');
-
-  // Enregistrement de parties
   const [playerName, setPlayerName] = useState('');
   const [character, setCharacter] = useState('');
   const [kills, setKills] = useState<number>(0);
@@ -36,40 +30,31 @@ export default function LolPage() {
   useEffect(() => {
     (async () => {
       // 0) Session
-      const { data: { session }, error: sessionErr } = await supabase.auth.getSession();
-      if (sessionErr || !session) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
         setLoading(false);
         return;
       }
       const userId = session.user.id;
 
-      // 1) Charger tous les succès LoL
+      // 1) Charger les succès LoL
       const { data: rawSuccesses, error: sError } = await supabase
         .from('successes')
         .select('*')
         .eq('category', 'LoL')
         .order('points', { ascending: true });
-      if (sError) {
-        console.error('Erreur fetching successes :', sError.message);
-        setSuccesses([]);
-      } else {
-        setSuccesses(rawSuccesses!);
-      }
+      if (sError) console.error('Erreur fetching successes :', sError.message);
+      else setSuccesses(rawSuccesses as Success[]);
 
-      // 2) Charger les succès validés
+      // 2) Charger succès validés
       const { data: rawUser, error: usError } = await supabase
         .from('user_successes')
         .select('success_id')
         .eq('user_id', userId);
-      if (usError) {
-        console.error('Erreur fetching user_successes :', usError.message);
-        setDoneIds(new Set());
-      } else {
-        const doneSet = new Set(rawUser!.map((u: UserSuccess) => u.success_id));
-        setDoneIds(doneSet);
-      }
+      if (usError) console.error('Erreur fetching user_successes :', usError.message);
+      else setDoneIds(new Set((rawUser as UserSuccess[]).map(u => u.success_id)));
 
-      // 3) Compte LoL
+      // 3) Charger le compte LoL
       const { data: accData, error: accErr } = await supabase
         .from('user_game_accounts')
         .select('account_name')
@@ -79,109 +64,115 @@ export default function LolPage() {
       if (accErr) console.error('Erreur fetch user_game_accounts :', accErr.message);
       setAccount(accData?.account_name ?? '');
 
-      // 4) Total points parties
+      // 4) Charger total des parties
       const { data: games, error: gameErr } = await supabase
         .from('game_records')
         .select('points')
         .eq('user_id', userId)
         .eq('game', 'LoL');
-      let gamesTotal = 0;
       if (gameErr) {
         console.error('Erreur fetch game_records :', gameErr.message);
       } else {
-        gamesTotal = (games ?? []).reduce(
-          (sum, rec) => sum + Math.max(rec.points, 0),
-          0
-        );
+        const sum = (games || []).reduce((acc, r) => acc + Math.max(r.points, 0), 0);
+        setTotalGamePoints(sum);
       }
-      setTotalGamePoints(gamesTotal);
-
-      // --- Calcul sous-total LoL ---
-      const successPts = rawSuccesses
-        ?.filter(s => doneIds.has(s.id))
-        .reduce((sum, s) => sum + s.points, 0) || 0;
-      const lolTotal = successPts + gamesTotal;
-
-      // Upsert sub-total LoL en base
-      await supabase
-        .from('user_points')
-        .upsert(
-          { user_id: userId, lol_points: lolTotal },
-          { onConflict: 'user_id' }
-        );
 
       setLoading(false);
     })();
-  }, [doneIds]);
+  }, []);
 
-  // Validation succès / annulation... (inchangé)
+  // Valider un succès
   const handleValidate = async (suc: Success) => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
-
-    await supabase
+    const { error: insErr } = await supabase
       .from('user_successes')
       .insert({ user_id: session.user.id, success_id: suc.id });
-    setDoneIds(prev => new Set(prev).add(suc.id));
+    if (insErr) console.error('Erreur insert user_successes :', insErr.message);
+    else setDoneIds(prev => new Set(prev).add(suc.id));
   };
 
+  // Annuler un succès
   const handleUnvalidate = async (suc: Success) => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
-
-    await supabase
+    const { error: delErr } = await supabase
       .from('user_successes')
       .delete()
       .eq('user_id', session.user.id)
       .eq('success_id', suc.id);
-    setDoneIds(prev => {
+    if (delErr) console.error('Erreur delete user_successes :', delErr.message);
+    else setDoneIds(prev => {
       const next = new Set(prev);
       next.delete(suc.id);
       return next;
     });
   };
 
+  // Enregistrer une partie récente
   const handleRecordGame = async (e: React.FormEvent) => {
     e.preventDefault();
     const delta = Math.max(kills - deaths / 2, 0);
     setLastGamePoints(delta);
 
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session) return;
+    // 1) Session
+    const { data: { session }, error: sessionErr } = await supabase.auth.getSession();
+    if (sessionErr || !session) {
+      console.error('Erreur session Supabase :', sessionErr?.message);
+      return;
+    }
+    const userId = session.user.id;
 
-    await supabase
+    // 2) Insert avec champs obligatoires non-null
+    const { error: recErr } = await supabase
       .from('game_records')
-      .insert([
-        { user_id: session.user.id, game: 'LoL', points: delta }
-      ]);
+      .insert([{
+        user_id: userId,
+        player_first_name: playerName || '',
+        character_name: character || '',
+        k: kills,
+        d: deaths,
+        game: 'LoL',
+        points: delta,
+      }]);
+    if (recErr) {
+      console.error('Erreur insertion game_records :', recErr.message);
+      return;
+    }
 
-    setTotalGamePoints(prev => prev + delta);
+    // 3) Re-fetch total pour affichage fiable
+    const { data: gamesAfter, error: fetchErr } = await supabase
+      .from('game_records')
+      .select('points')
+      .eq('user_id', userId)
+      .eq('game', 'LoL');
+    if (fetchErr) {
+      console.error('Erreur fetch game_records :', fetchErr.message);
+      return;
+    }
+    const newTotal = (gamesAfter || []).reduce(
+      (sum, rec) => sum + Math.max(rec.points, 0),
+      0
+    );
+    setTotalGamePoints(newTotal);
   };
 
   if (loading) {
     return (
-      <PageLayout title="League of Legends – Réalisations & succès">
+      <PageLayout title="League of Legends – Succès">
         <p className="text-center text-white py-16">Chargement…</p>
       </PageLayout>
     );
   }
 
   return (
-    <PageLayout title="League of Legends – Réalisations & succès">
+    <PageLayout title="League of Legends – Succès">
       <div className="w-full flex flex-col md:flex-row gap-8 px-4 py-12">
         {/* Colonne gauche */}
         <div className="w-full md:basis-1/5 flex flex-col gap-8">
-          {/* Enregistrer une partie récente */}
+          {/* Enregistrer partie */}
           <section className="bg-bg-mid p-8 rounded-lg shadow-lg">
-            <h2 className="text-2xl font-semibold text-white mb-6">
-              Enregistrer une partie récente
-            </h2>
+            <h2 className="text-2xl font-semibold text-white mb-6">Enregistrer une partie récente</h2>
             <form onSubmit={handleRecordGame} className="space-y-6">
               <div>
                 <label className="block text-white mb-2">Prénom du joueur</label>
@@ -229,14 +220,11 @@ export default function LolPage() {
               </div>
               <button
                 type="submit"
-                className="w-full py-4 bg-accent-purple hover:bg-accent-purple/90 text-white font-semibold rounded-lg transition"
+                className="w-full py-4 bg-accent-purple text-white font-semibold rounded-lg hover:bg-accent-purple/90 transition"
               >
                 Enregistrer la partie
               </button>
             </form>
-            <p className="mt-4 text-white/70 text-sm">
-              Points = <code>K–(D/2)</code> (seules les valeurs positives sont ajoutées).
-            </p>
             {lastGamePoints !== null && (
               <p className="mt-3 text-white">
                 Dernière partie : <strong>+{lastGamePoints} pts</strong>
@@ -247,7 +235,7 @@ export default function LolPage() {
             </p>
           </section>
 
-          {/* Interface du compte LoL */}
+          {/* Compte LoL */}
           <section className="bg-bg-mid p-6 rounded-lg shadow-lg">
             <label className="block text-sm font-medium text-white mb-2">
               Nom de joueur LoL
@@ -261,54 +249,47 @@ export default function LolPage() {
             />
             <button
               onClick={async () => {
-                const {
-                  data: { session },
-                } = await supabase.auth.getSession();
+                const { data: { session } } = await supabase.auth.getSession();
                 if (!session) return;
-                const { error: upErr } = await supabase
-                  .from('user_game_accounts')
-                  .upsert(
-                    { user_id: session.user.id, game: 'LoL', account_name: account },
-                    { onConflict: 'user_id,game' }
-                  );
-                if (upErr) console.error(upErr.message);
+                const { error } = await supabase.from('user_game_accounts').upsert(
+                  { user_id: session.user.id, game: 'LoL', account_name: account },
+                  { onConflict: 'user_id,game' }
+                );
+                if (error) console.error(error.message);
                 else {
                   setMsg('Nom de joueur enregistré !');
                   setTimeout(() => setMsg(''), 2500);
                 }
               }}
-              className="w-full py-3 bg-accent-blue hover:bg-accent-blue/80 text-white font-semibold rounded-lg transition"
+              className="w-full py-3 bg-accent-blue text-white font-semibold rounded-lg hover:bg-accent-blue/80 transition"
             >
               Sauvegarder
             </button>
             {msg && <p className="mt-3 text-green-300">{msg}</p>}
           </section>
 
-          {/* Nouveau : Sous-total LoL */}
-<section className="bg-bg-mid p-6 rounded-lg shadow-lg">
-  <h2 className="text-lg font-semibold text-white mb-2">Sous-total LoL</h2>
-  <p className="text-2xl font-bold text-white">
-    {/* Additionne ici tes points de succès validés + totalGamePoints */}
-    {doneIds.size > 0
-      ? Array.from(doneIds).reduce(
-          (sum, id) =>
-            sum +
-            (successes.find(suc => suc.id === id)?.points || 0),
-          totalGamePoints
-        )
-      : totalGamePoints
-    } pts
-  </p>
-</section>
-
+          {/* Sous-total LoL */}
+          <section className="bg-bg-mid p-6 rounded-lg shadow-lg">
+            <h2 className="text-lg font-semibold text-white mb-2">Sous-total LoL</h2>
+            <p className="text-2xl font-bold text-white">
+              {doneIds.size > 0
+                ? Array.from(doneIds).reduce(
+                    (sum, id) =>
+                      sum + (successes.find(s => s.id === id)?.points || 0),
+                    totalGamePoints
+                  )
+                : totalGamePoints}{' '}
+              pts
+            </p>
+          </section>
         </div>
 
-        {/* Colonne droite – Succès */}
+        {/* Succès LoL */}
         <section className="w-full md:basis-4/5 bg-bg-mid p-8 rounded-xl shadow-xl overflow-auto">
           <h2 className="text-3xl md:text-4xl font-semibold text-white mb-6">
             Succès LoL
           </h2>
-          <h3>Connectez vous pour voir ou valider les succès.</h3>
+          <h3 className="text-white/70 mb-4">Connectez-vous pour voir ou valider les succès.</h3>
           <ul className="space-y-4">
             {successes.map(suc => {
               const done = doneIds.has(suc.id);

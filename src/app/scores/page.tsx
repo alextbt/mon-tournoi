@@ -1,3 +1,4 @@
+// src/app/scores/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -19,86 +20,71 @@ export default function ScoresPage() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Compute modified total based on profile style
   const computeModified = (
     style: LeaderboardEntry['profile_style'],
     esport: number,
     sport: number
   ): number | null => {
-    if (style === 'Joueur') {
-      // +25% esport, -50% sport
-      return Math.round(esport * 1.25 + sport * 0.5);
-    }
-    if (style === 'Sportif') {
-      // +25% sport, -50% esport
-      return Math.round(esport * 0.5 + sport * 1.25);
-    }
-    return null; // Aucune modification
+    if (style === 'Joueur') return Math.round(esport * 1.25 + sport * 0.5);
+    if (style === 'Sportif') return Math.round(esport * 0.5 + sport * 1.25);
+    return null;
   };
 
   useEffect(() => {
     (async () => {
-      // 1) Récupérer tous les points et styles de profil
       const { data: pts, error: ptsErr } = await supabase
         .from('user_points')
         .select('user_id, total_points, esports_points, sport_points');
-      if (ptsErr || !pts) {
-        console.error('Erreur fetch user_points:', ptsErr?.message);
-        setLoading(false);
-        return;
-      }
-      const userIds = pts.map(r => r.user_id);
-
-      // 2) Récupérer prénoms et styles
+      if (ptsErr || !pts) { console.error(ptsErr); setLoading(false); return; }
+      const ids = pts.map(r => r.user_id);
       const { data: profs, error: profErr } = await supabase
         .from('profiles')
         .select('id, first_name, profile_style')
-        .in('id', userIds);
-      if (profErr || !profs) {
-        console.error('Erreur fetch profiles:', profErr?.message);
-        setLoading(false);
-        return;
-      }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const profileMap = profs.reduce<Record<string, { first_name: string; profile_style: any }>>((m, p) => {
-        m[p.id] = { first_name: p.first_name, profile_style: p.profile_style };
-        return m;
-      }, {});
+        .in('id', ids);
+      if (profErr || !profs) { console.error(profErr); setLoading(false); return; }
+      const map = Object.fromEntries(
+        profs.map(p => [p.id, { first_name: p.first_name, profile_style: p.profile_style }])
+      );
 
-      // 3) Construire la liste initiale
-      const list: LeaderboardEntry[] = pts.map((r) => {
-        const { first_name = '—', profile_style = 'Aucune' } = profileMap[r.user_id] || {};
+      const list: LeaderboardEntry[] = pts.map(r => {
+        const { first_name = '—', profile_style = 'Aucune' } = map[r.user_id] || {};
         const esport = r.esports_points ?? 0;
         const sport = r.sport_points ?? 0;
         const total = r.total_points ?? 0;
-        const modifiedTotal = computeModified(profile_style, esport, sport);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const mod = computeModified(profile_style as any, esport, sport);
         return {
           user_id: r.user_id,
           first_name,
-          profile_style,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          profile_style: profile_style as any,
           esport,
           sport,
           total,
-          modifiedTotal,
+          modifiedTotal: mod,
           movement: null,
         };
       });
 
-      // 4) Tri par total décroissant
       list.sort((a, b) => b.total - a.total);
+const prev = JSON.parse(localStorage.getItem('__prevLeaderboard__') || '[]') as string[];
+const prevPos = Object.fromEntries(prev.map((id, i) => [id, i]));
 
-      // 5) Flèches de mouvement selon le classement précédent
-      const prev = JSON.parse(localStorage.getItem('__prevLeaderboard__') || '[]') as string[];
-      const prevPos = prev.reduce<Record<string, number>>((m, id, i) => {
-        m[id] = i;
-        return m;
-      }, {});
-      list.forEach((e, idx) => {
-        if (prevPos[e.user_id] === undefined) e.movement = null;
-        else if (idx < prevPos[e.user_id]) e.movement = 'up';
-        else if (idx > prevPos[e.user_id]) e.movement = 'down';
-      });
-      localStorage.setItem('__prevLeaderboard__', JSON.stringify(list.map(e => e.user_id)));
+list.forEach((e, idx) => {
+  const prevIndex = prevPos[e.user_id];
+  if (prevIndex === undefined || prevIndex === idx) {
+    e.movement = null;
+  } else if (idx < prevIndex) {
+    e.movement = 'up';
+  } else {
+    e.movement = 'down';
+  }
+});
+
+localStorage.setItem(
+  '__prevLeaderboard__',
+  JSON.stringify(list.map(e => e.user_id))
+);
 
       setEntries(list);
       setLoading(false);
@@ -107,59 +93,54 @@ export default function ScoresPage() {
 
   if (loading) {
     return (
-      <PageLayout title="Classement">
-        <p className="text-center text-white py-16">Chargement du classement…</p>
+      <PageLayout title="Classement" bgClass="bg-gradient-to-br from-yellow-500 via-yellow-400 to-yellow-500">
+        <div className="flex items-center justify-center h-64">
+          <p className="text-white">Chargement du classement…</p>
+        </div>
       </PageLayout>
     );
   }
 
   return (
-    <PageLayout title="Classement">
-      <div className="max-w-4xl mx-auto overflow-x-auto px-4">
-        <table className="w-full table-auto text-white text-base md:text-lg">
-          <thead>
-            <tr className="bg-bg-mid">
-              <th className="px-6 py-3 text-left">#</th>
-              <th className="px-6 py-3 text-left">Joueur</th>
-              <th className="px-6 py-3 text-center">Style</th>
-              <th className="px-6 py-3 text-right">eSport</th>
-              <th className="px-6 py-3 text-right">Sport</th>
-              <th className="px-6 py-3 text-right">Total</th>
-              <th className="px-6 py-3 text-right">Total modifié</th>
-            </tr>
-          </thead>
-          <tbody>
-            {entries.map((e, i) => (
-              <tr key={e.user_id} className={i % 2 === 0 ? 'bg-bg-light' : undefined}>
-                <td className="px-6 py-3 flex items-center gap-1">
-                  <span className="font-semibold">#{i + 1}</span>
-                  {e.movement === 'up' && <span className="text-green-400">🔼</span>}
-                  {e.movement === 'down' && <span className="text-red-400">🔽</span>}
-                </td>
-                <td className="px-6 py-3">{e.first_name}</td>
-                <td className="px-6 py-3 text-center">{e.profile_style}</td>
-                <td className="px-6 py-3 text-right">{e.esport}</td>
-                <td className="px-6 py-3 text-right">{e.sport}</td>
-                <td className="px-6 py-3 text-right font-bold">{e.total}</td>
-                <td className="px-6 py-3 text-right font-semibold">
-                  {e.modifiedTotal === null ? (
-                    <span className="text-white/50">—</span>
-                  ) : (
-                    <span className={
-                      e.modifiedTotal! > e.total
-                        ? 'text-green-400'
-                        : e.modifiedTotal! < e.total
-                        ? 'text-red-400'
-                        : 'text-white'
-                    }>
-                      {e.modifiedTotal}
-                    </span>
-                  )}
-                </td>
+    <PageLayout title="" bgClass="bg-gradient-to-br from-yellow-500 via-yellow-400 to-yellow-500">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
+        <h1 className="text-3xl font-bold text-white text-center mb-6">Classement</h1>
+        <div className="overflow-x-auto">
+          <table className="min-w-[800px] mx-auto w-full table-auto bg-white/10 rounded-lg">
+            <thead>
+              <tr className="bg-white/20">
+                <th className="px-4 py-3 text-left">#</th>
+                <th className="px-4 py-3 text-left">Joueur</th>
+                <th className="px-4 py-3 text-center">Style</th>
+                <th className="px-4 py-3 text-right">eSport</th>
+                <th className="px-4 py-3 text-right">Sport</th>
+                <th className="px-4 py-3 text-right">Total</th>
+                <th className="px-4 py-3 text-right">Total modifié</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {entries.map((e, i) => (
+                <tr key={e.user_id} className={i % 2 === 0 ? 'bg-white/5' : ''}>
+                  <td className="px-4 py-2">#{i + 1} {e.movement === 'up' ? '🔼' : e.movement === 'down' ? '🔽' : ''}</td>
+                  <td className="px-4 py-2">{e.first_name}</td>
+                  <td className="px-4 py-2 text-center">{e.profile_style}</td>
+                  <td className="px-4 py-2 text-right">{e.esport}</td>
+                  <td className="px-4 py-2 text-right">{e.sport}</td>
+                  <td className="px-4 py-2 text-right font-bold">{e.total}</td>
+                  <td className="px-4 py-2 text-right font-semibold">
+                    {e.modifiedTotal == null ? '—' : (
+                      <span className={
+                        e.modifiedTotal > e.total ? 'text-green-300' : e.modifiedTotal < e.total ? 'text-red-300' : 'text-white'
+                      }>
+                        {e.modifiedTotal}
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </PageLayout>
   );
