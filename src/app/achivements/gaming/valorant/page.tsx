@@ -65,7 +65,8 @@ export default function ValorantPage() {
       const { data: rawSuccesses, error: sError } = await supabase
         .from('successes')
         .select('*')
-        .eq('category', 'Valorant');
+        .eq('category', 'Valorant')
+        .order('points', { ascending: true });
       if (sError) {
         console.error('Erreur fetching successes :', sError.message);
       } else {

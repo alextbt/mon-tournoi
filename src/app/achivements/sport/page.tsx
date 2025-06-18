@@ -15,8 +15,13 @@ const SPORTS: Sport[] = [
   {
     name: 'Musculation',
     slug: 'musculation',
-    // Un exemple de fond « musculation » — remplace-le si tu as ton propre visuel
     bg: '🏋️',
+    successCount: 0,
+  },
+  {
+    name: 'Escalade',
+    slug: 'escalade',
+    bg: '🧗',
     successCount: 0,
   },
 ];
@@ -27,9 +32,15 @@ export default function SportHub() {
       <div className="w-full px-4 py-12">
         <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-8">
           {SPORTS.map((sport) => {
-            // on choisit un anneau vert pour la muscu
-            const ringColor = 'ring-green-400';
-            const accentText = 'text-green-300';
+            let ringColor = '';
+            let accentText = '';
+            if (sport.slug === 'musculation') {
+              ringColor = 'ring-green-400';
+              accentText = 'text-green-300';
+            } else if (sport.slug === 'escalade') {
+              ringColor = 'ring-yellow-400';
+              accentText = 'text-yellow-300';
+            }
 
             return (
               <Link
@@ -45,10 +56,7 @@ export default function SportHub() {
                   "
                   style={{ backgroundImage: `url(${sport.bg})` }}
                 >
-                  {/* overlay sombre */}
                   <div className="absolute inset-0 bg-black/60" />
-
-                  {/* panneau d’infos */}
                   <div
                     className={`
                       absolute bottom-4 left-4 right-4
@@ -69,10 +77,17 @@ export default function SportHub() {
                     </p>
                   </div>
                 </div>
-                {/* Sous-titre en dessous */}
-                <p className="mt-2 text-center text-white/70">
-                  L’exercice <strong>Course</strong> se trouve également dans la catégorie musculation
-                </p>
+                {/* Sous-titre en dessous selon le sport */}
+                {sport.slug === 'musculation' && (
+                  <p className="mt-2 text-center text-white/70">
+                    L’exercice <strong>Course</strong> se trouve également dans la catégorie Musculation.
+                  </p>
+                )}
+                {sport.slug === 'escalade' && (
+                  <p className="mt-2 text-center text-white/70">
+                    Escalade en bloc et en voie ici !
+                  </p>
+                )}
               </Link>
             );
           })}

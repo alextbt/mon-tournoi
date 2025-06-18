@@ -1,4 +1,3 @@
-// src/app/roadmap/page.tsx
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -14,9 +13,11 @@ export default function RoadmapPage() {
   const events: Record<string, string> = {
     '2025-06-16': 'Ajout des catégories : « LOL », « VALORANT » et « Musculation ».',
     '2025-06-17': 'Correction du tableau de classement. Activation du bonus/malus de choix du profil (Joueur / Sportif). Ajout du calcul des points dans la catégorie Musculation. Ajout du bouton des demandes.',
-    '2025-06-18': 'Ajout de la catégorie « Escalade ».',
-    '2025-06-19': 'Amélioration de la page « Musculation » : ajout d’exercices spécifiques et de réalisation spéciales (poids lourds).',
-    '2025-06-21': 'Ajout du jeu TFT. Ajout de la catégorie événements limités.'
+    '2025-06-18': 'Sortie de la version 1.1 : Ajout de la catégorie « Escalade ».',
+    '2025-06-19': 'Amélioration de la page « Musculation » : ajout d’exercices spécifiques et de réalisations spéciales (poids lourds).',
+    '2025-06-20': 'Refonte de la page LOL et VALORANT pour une meilleure clarté.',
+    '2025-06-21': 'Ajout de l\'onglet TFT sur le jeu League of Legends.',
+    '2025-06-22': 'Sortie de la version 1.2 : Ajout dans la catégorie eSport de Overwatch 2 et dans la catégorie Sport du Cyclisme. Ajout des événements limités (un nouvel événement est déjà disponible !). Ajout de nouveaux succès pour toutes les catégories.'
   };
 
   // 2) Génère toutes les dates entre deux bornes incluses
@@ -37,10 +38,14 @@ export default function RoadmapPage() {
     []
   );
 
+  // Date d'aujourd'hui au format YYYY-MM-DD
+  const today = new Date().toISOString().slice(0, 10);
+
   return (
     <PageLayout title="Roadmap & MàJ">
       <div className="max-w-4xl mx-auto py-8 space-y-6">
         <h2>Notez que les mises à jour prévues et annoncées sortent généralement au soir de la date prévue.</h2>
+
         {/* onglets */}
         <div className="flex border-b border-white/30">
           <button
@@ -67,56 +72,87 @@ export default function RoadmapPage() {
 
         {/* contenu MàJ */}
         {activeTab === 'maj' && (
-          <div className="text-white space-y-4">
+          <div className="text-white space-y-6">
             <h2 className="text-2xl font-semibold">Version actuelle</h2>
-            <p>v1.0 – Lancement officiel du site Grand Tournoi de l’Été !</p>
+            <p>
+              v1.1 – Ajout de la catégorie Escalade. Ajout d&apos;une dizaine de succès dans les catégories eSport.
+            </p>
+            <p>
+              Une mise à jour majeure est en préparation pour la fin de la semaine. Elle devrait être disponible le 22 juin au soir !
+            </p>
+
+            <h3 className="text-xl font-semibold">Anciennes mises à jour</h3>
+            <div className="space-y-2">
+              <details className="bg-white/10 p-4 rounded-lg">
+                <summary className="cursor-pointer font-medium">
+                  v1.0 – Lancement officiel du site Grand Tournoi de l’Été !
+                </summary>
+                <p className="mt-2 text-white/80">
+                  Sortie initiale avec les catégories LOL, VALORANT et Musculation, système de points de jeu et premier lot de succès.
+                </p>
+              </details>
+              {/* Autres anciennes versions si besoin */}
+            </div>
           </div>
         )}
 
         {/* contenu Roadmap */}
         {activeTab === 'roadmap' && (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <h2 className="text-2xl font-semibold text-white">Calendrier</h2>
-            {/* grille des dates */}
-            <div className="grid grid-cols-7 gap-2">
-              {roadmapDates.map(date => {
-                const isSelected = selectedDate === date;
-                const hasEvent = Boolean(events[date]);
-                return (
-                  <button
-                    key={date}
-                    onClick={() => setSelectedDate(date)}
-                    className={`p-2 rounded text-sm text-white transition
-                      ${isSelected
-                        ? 'bg-accent-purple'
-                        : hasEvent
-                        ? 'bg-white/20 hover:bg-white/30 ring-2 ring-accent-purple'
-                        : 'bg-white/10 hover:bg-white/20'}`}
-                  >
-                    {date.slice(8)}
-                  </button>
-                );
-              })}
-            </div>
 
-            {/* détails date sélectionnée */}
-            {selectedDate && (
-              <div className="mt-4 p-4 bg-white/10 rounded text-white">
-                <h3 className="font-medium">
-                  {new Date(selectedDate).toLocaleDateString('fr-FR', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
-                </h3>
-                <p className="mt-2 text-white/80">
-                  {events[selectedDate]
-                    ? events[selectedDate]
-                    : "Aucune mise à jour programmée pour cette date."}
-                </p>
+            {/* détails + calendrier en grid fixe */}
+            <div className="grid grid-rows-[minmax(8rem,auto)_1fr] gap-4">
+              {/* zone détails (hauteur minimale) */}
+              <div className="min-h-[8rem] p-4 bg-white/10 rounded text-white">
+                {selectedDate ? (
+                  <>
+                    <h3 className="font-medium">
+                      {new Date(selectedDate).toLocaleDateString('fr-FR', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
+                    </h3>
+                    <p className="mt-2 text-white/80">
+                      {events[selectedDate] ?? "Aucune mise à jour programmée pour cette date."}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-white/50">
+                    Sélectionne une date pour voir le détail de la mise à jour.
+                  </p>
+                )}
               </div>
-            )}
+
+              {/* zone calendrier */}
+              <div className="grid grid-cols-7 gap-2">
+                {roadmapDates.map(date => {
+                  const isSelected = selectedDate === date;
+                  const hasEvent = Boolean(events[date]);
+                  const isPast = date < today;
+
+                  return (
+                    <button
+                      key={date}
+                      onClick={() => setSelectedDate(date)}
+                      className={`p-2 rounded text-sm transition ${
+                        isSelected
+                          ? 'bg-accent-purple text-white'
+                          : isPast
+                          ? 'bg-white/5 text-white/50'
+                          : hasEvent
+                          ? 'bg-white/20 hover:bg-white/30 ring-2 ring-accent-purple text-white'
+                          : 'bg-white/10 hover:bg-white/20 text-white'
+                      }`}
+                    >
+                      {date.slice(8)}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         )}
       </div>

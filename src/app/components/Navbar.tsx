@@ -37,7 +37,7 @@ export default function Navbar() {
     <header className="sticky top-0 w-full bg-black bg-opacity-50 backdrop-blur-md text-white px-6 py-4 flex items-center justify-between z-50">
       <div className="flex items-center space-x-8">
         <Link href="/" className="text-2xl font-extrabold text-accent-purple drop-shadow-neon">
-          GTE | v1.0
+          GTE | v1.1
         </Link>
         {/* Desktop nav */}
         <nav className="hidden md:flex space-x-4 items-center">
@@ -63,6 +63,9 @@ export default function Navbar() {
                 <div className="px-2 text-xs text-gray-400 uppercase">Sport</div>
                 <Link href="/achivements/sport/musculation" className="block px-4 py-1 hover:bg-bg-light" onClick={() => setAchieveOpen(false)}>
                   Musculation
+                </Link>
+                <Link href="/achivements/sport/escalade" className="block px-4 py-1 hover:bg-bg-light" onClick={() => setAchieveOpen(false)}>
+                  Escalade
                 </Link>
               </div>
             )}

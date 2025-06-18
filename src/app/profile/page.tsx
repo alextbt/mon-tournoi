@@ -1,3 +1,4 @@
+// src/app/profile/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -29,7 +30,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     (async () => {
-      // 1) Vérifier session
+      // 1) Session & user
       const { data: { session }, error: sessionErr } = await supabase.auth.getSession();
       if (sessionErr || !session) {
         router.replace('/login');
@@ -37,7 +38,7 @@ export default function ProfilePage() {
       }
       const userId = session.user.id;
 
-      // 2) Prénom depuis profiles
+      // 2) Prénom
       const { data: profRow, error: profErr } = await supabase
         .from('profiles')
         .select('first_name')
@@ -46,11 +47,11 @@ export default function ProfilePage() {
       if (profErr) console.error('Erreur profile:', profErr.message);
       setFirstName(profRow?.first_name ?? 'Utilisateur');
 
-      // 3) Récupérer sous-totaux et total en une requête
+      // 3) Sous-totaux et total
       const { data: ptsData, error: ptsErr } = await supabase
         .from('user_points')
         .select(
-          'lol_points, valorant_points, musculation_points, esports_points, sport_points, total_points'
+          'lol_points, valorant_points, musculation_points, escalade_points, esports_points, sport_points, total_points'
         )
         .eq('user_id', userId)
         .maybeSingle();
@@ -59,12 +60,12 @@ export default function ProfilePage() {
         lol_points = 0,
         valorant_points = 0,
         musculation_points = 0,
+        escalade_points = 0,
         esports_points = 0,
         sport_points = 0,
         total_points = 0,
       } = ptsData || {};
 
-      // 4) Mettre à jour états
       setTotalPoints(total_points);
       setSubTotalEsport(esports_points);
       setSubTotalSport(sport_points);
@@ -72,35 +73,36 @@ export default function ProfilePage() {
         { category: 'LoL', points: lol_points },
         { category: 'Valorant', points: valorant_points },
         { category: 'Musculation', points: musculation_points },
+        { category: 'Escalade', points: escalade_points },
       ]);
 
-      // 5) Récupérer rang
+      // 4) Rang
       const { count: higherCount } = await supabase
         .from('user_points')
         .select('*', { head: true, count: 'exact' })
         .gt('total_points', total_points);
       setRank((higherCount ?? 0) + 1);
 
-// 6) Réalisations détaillées
-const { data: rawAch, error: achErr } = await supabase
-  .from('user_achievements')
-  .select('achievement_id, achieved_at, achievements ( title, points )')
-  .eq('user_id', userId);
-if (achErr) console.error('Erreur achievements:', achErr.message);
-
-setAchievements(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (rawAch || []).map((u: any) => {
-    // Supabase renvoie `achievements` sous forme de tableau, on prend le premier élément
-    const ach = Array.isArray(u.achievements) ? u.achievements[0] : u.achievements;
-    return {
-      id: u.achievement_id,
-      title: ach?.title ?? '—',
-      points: ach?.points ?? 0,
-      achieved_at: u.achieved_at,
-    };
-  })
-);
+      // 5) Achievements détaillés
+      const { data: rawAch, error: achErr } = await supabase
+        .from('user_achievements')
+        .select('achievement_id, achieved_at, achievements ( title, points )')
+        .eq('user_id', userId);
+      if (achErr) console.error('Erreur achievements:', achErr.message);
+      setAchievements(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (rawAch || []).map((u: any) => {
+          const ach = Array.isArray(u.achievements)
+            ? u.achievements[0]
+            : u.achievements;
+          return {
+            id: u.achievement_id,
+            title: ach?.title ?? '—',
+            points: ach?.points ?? 0,
+            achieved_at: u.achieved_at,
+          };
+        })
+      );
 
       setLoading(false);
     })();
@@ -128,10 +130,7 @@ setAchievements(
             <h1 className="text-3xl font-bold text-white">{firstName}</h1>
             <span className="text-white/80 text-lg">| Position #{rank}</span>
           </div>
-          <button
-            onClick={handleLogout}
-            className="bg-opacity-20 text-white px-4 py-2 rounded-lg hover:bg-opacity-30 transition"
-          >
+          <button onClick={handleLogout} className="bg-opacity-20 text-white px-4 py-2 rounded-lg hover:bg-opacity-30 transition">
             Déconnexion
           </button>
         </div>
@@ -142,14 +141,12 @@ setAchievements(
             <p className="text-sm text-white/70">Total des points</p>
             <p className="text-2xl font-extrabold text-white">{totalPoints}</p>
           </div>
-
           <div className="text-center space-y-1">
             <p className="text-sm text-white/70">Sous-total eSport</p>
             <p className="text-xl font-bold text-white">{subTotalEsport}</p>
             <p className="text-sm text-white/70 mt-2">Sous-total Sport</p>
             <p className="text-xl font-bold text-white">{subTotalSport}</p>
           </div>
-
           <div className="text-center">
             <p className="text-sm text-white/70">Nombre de catégories</p>
             <p className="text-2xl font-extrabold text-white">{breakdown.length}</p>
@@ -159,12 +156,9 @@ setAchievements(
         {/* Breakdown par catégorie */}
         <section className="bg-bg-light p-6 space-y-4">
           <h2 className="text-xl font-semibold text-white mb-2">Points par catégorie</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             {breakdown.map(item => (
-              <div
-                key={item.category}
-                className="p-4 bg-bg-mid rounded-lg text-white text-center"
-              >
+              <div key={item.category} className="p-4 bg-bg-mid rounded-lg text-white text-center">
                 <p className="font-medium">{item.category}</p>
                 <p className="mt-1 text-lg font-bold">{item.points} pts</p>
               </div>
@@ -180,10 +174,7 @@ setAchievements(
           ) : (
             <ul className="space-y-3">
               {achievements.map(a => (
-                <li
-                  key={a.id}
-                  className="flex justify-between p-4 bg-bg-light rounded-lg text-white"
-                >
+                <li key={a.id} className="flex justify-between p-4 bg-bg-light rounded-lg text-white">
                   <div>
                     <p>{a.title}</p>
                     <p className="text-sm text-white/70">

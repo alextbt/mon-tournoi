@@ -66,7 +66,12 @@ export default function ScoresPage() {
         };
       });
 
-      list.sort((a, b) => b.total - a.total);
+      list.sort((a, b) => {
+  // si un joueur a un total modifié, on l’utilise ; sinon on retombe sur le total standard
+  const aScore = a.modifiedTotal !== null ? a.modifiedTotal : a.total;
+  const bScore = b.modifiedTotal !== null ? b.modifiedTotal : b.total;
+  return bScore - aScore;
+});
 const prev = JSON.parse(localStorage.getItem('__prevLeaderboard__') || '[]') as string[];
 const prevPos = Object.fromEntries(prev.map((id, i) => [id, i]));
 

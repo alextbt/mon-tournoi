@@ -37,6 +37,10 @@ export default function HomePage() {
           <p className="text-lg text-white-700">
             Deux domaines, un seul grand gagnant !
           </p>
+          <p className="text-lg text-white-700">
+            Inscrivez vous et remportez des points à travers des réalisations et succès dans l&apos;eSport et le Sport ! Par ailleurs, vous pouvez décider de participez seulement dans l&apos;eSport ou le 
+            Sport, aucune obligation ! 
+          </p>
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
             <Link href="/signup">
               <button className="btn-neon w-full sm:w-auto">S’inscrire au tournoi</button>
