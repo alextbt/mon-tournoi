@@ -1,335 +1,207 @@
+// src/app/valorant/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import PageLayout from '@/components/PageLayout';
 import { supabase } from '@/lib/supabaseClient';
+import Link from 'next/link';
 
-type Success = {
-  id: number;
-  title: string;
-  description: string;
-  points: number;
-};
-type UserSuccess = {
-  success_id: number;
-};
+type Success = { id: number; title: string; description: string; points: number };
 
 export default function ValorantPage() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
 
-  // Succès & validation
+  // Data
   const [successes, setSuccesses] = useState<Success[]>([]);
   const [doneIds, setDoneIds] = useState<Set<number>>(new Set());
-
-  // Total points parties
+  const [searchTerm, setSearchTerm] = useState('');
   const [totalGamePoints, setTotalGamePoints] = useState(0);
-
-  // Enregistrement de la partie
+  const [lastGamePoints, setLastGamePoints] = useState<number | null>(null);
   const [playerName, setPlayerName] = useState('');
   const [agent, setAgent] = useState('');
-  const [kills, setKills] = useState(0);
-  const [deaths, setDeaths] = useState(0);
-  const [lastGamePoints, setLastGamePoints] = useState<number | null>(null);
-
-  // Sous-total Valorant
+  const [kills, setKills] = useState('');
+  const [deaths, setDeaths] = useState('');
+  const [assists, setAssists] = useState('');
   const [subTotalValorant, setSubTotalValorant] = useState(0);
-
-  // Enregistrement du nom Valorant
   const [account, setAccount] = useState('');
   const [msg, setMsg] = useState('');
 
-  const router = useRouter();
-
-  // Chargement initial : session, parties, succès, validations
+  // Initial fetch
   useEffect(() => {
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setLoading(false);
-        return;
-      }
+      if (!session) { setLoading(false); return; }
       const userId = session.user.id;
 
-      // 1) Total points parties
-      const { data: games, error: gameErr } = await supabase
-        .from('game_records')
-        .select('points')
-        .eq('user_id', userId)
-        .eq('game', 'Valorant');
-      if (gameErr) console.error('Erreur fetch game_records :', gameErr.message);
-      const gamesTotal = (games ?? []).reduce((sum, r) => sum + Math.max(r.points, 0), 0);
+      // fetch game records
+      const { data: games } = await supabase
+        .from('game_records').select('points')
+        .eq('user_id', userId).eq('game','Valorant');
+      const gamesTotal = (games||[]).reduce((sum, r) => sum + Math.max(r.points,0),0);
       setTotalGamePoints(gamesTotal);
 
-      // 2) Charger les succès Valorant
-      const { data: rawSuccesses, error: sError } = await supabase
-        .from('successes')
-        .select('*')
-        .eq('category', 'Valorant')
-        .order('points', { ascending: true });
-      if (sError) {
-        console.error('Erreur fetching successes :', sError.message);
-      } else {
-        setSuccesses(rawSuccesses!);
-      }
+      // fetch successes
+      const { data: rawSuccesses } = await supabase
+        .from('successes').select('id,title,description,points')
+        .eq('category','Valorant').order('points',{ascending:true});
+      setSuccesses(rawSuccesses || []);
 
-      // 3) Succès validés
-      const { data: rawUserSucc, error: usError } = await supabase
-        .from('user_successes')
-        .select('success_id')
-        .eq('user_id', userId);
-      if (usError) {
-        console.error('Erreur fetching user_successes :', usError.message);
-      } else {
-        setDoneIds(new Set((rawUserSucc as UserSuccess[]).map(u => u.success_id)));
-      }
+      // fetch user successes
+      const { data: rawUser } = await supabase
+        .from('user_successes').select('success_id')
+        .eq('user_id',userId);
+      setDoneIds(new Set((rawUser||[]).map(u=>u.success_id)));
 
-      // 4) Calcul sous-total Valorant
-      const successPts = (rawSuccesses ?? [])
-        .filter(suc => doneIds.has(suc.id))
-        .reduce((sum, suc) => sum + suc.points, 0);
-      const valorantTotal = successPts + gamesTotal;
-      setSubTotalValorant(valorantTotal);
+      // calc subtotal
+      const successPts = (rawSuccesses||[])
+        .filter(s=> (rawUser||[]).some(u=>u.success_id===s.id))
+        .reduce((sum,s)=>sum+s.points,0);
+      const total = successPts + gamesTotal;
+      setSubTotalValorant(total);
 
-      // 5) Upsert sous-total Valorant en BDD
-      await supabase
-        .from('user_points')
-        .upsert(
-          { user_id: userId, valorant_points: valorantTotal },
-          { onConflict: 'user_id' }
-        );
+      // fetch account
+      const { data: acc } = await supabase
+        .from('user_game_accounts').select('account_name')
+        .eq('user_id', userId).eq('game','Valorant').maybeSingle();
+      setAccount(acc?.account_name||'');
 
       setLoading(false);
     })();
-  }, [doneIds]);
+  }, []);
 
-  // Valider ou annuler un succès
-  const handleValidateSuccess = async (suc: Success) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-    await supabase
-      .from('user_successes')
-      .insert({ user_id: session.user.id, success_id: suc.id });
-    setDoneIds(prev => new Set(prev).add(suc.id));
+  // update subtotal on changes
+  useEffect(() => {
+    const successPts = successes
+      .filter(s=>doneIds.has(s.id)).reduce((sum,s)=>sum+s.points,0);
+    const total = successPts + totalGamePoints;
+    setSubTotalValorant(total);
+    (async () => {
+      const { data:{session} } = await supabase.auth.getSession(); if(!session) return;
+      await supabase.from('user_points').upsert({user_id:session.user.id, valorant_points:total},{onConflict:'user_id'});
+    })();
+  }, [doneIds,totalGamePoints,successes]);
+
+  const handleValidateSuccess = async(s:Success)=>{
+    const { data:{session} } = await supabase.auth.getSession(); if(!session)return;
+    await supabase.from('user_successes').insert({user_id:session.user.id,success_id:s.id});
+    setDoneIds(prev=>new Set(prev).add(s.id));
+  };
+  const handleUnvalidateSuccess = async(s:Success)=>{
+    const { data:{session} } = await supabase.auth.getSession(); if(!session)return;
+    await supabase.from('user_successes').delete().eq('user_id',session.user.id).eq('success_id',s.id);
+    setDoneIds(prev=>{const n=new Set(prev);n.delete(s.id);return n;});
   };
 
-  const handleUnvalidateSuccess = async (suc: Success) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-    await supabase
-      .from('user_successes')
-      .delete()
-      .eq('user_id', session.user.id)
-      .eq('success_id', suc.id);
-    setDoneIds(prev => { const next = new Set(prev); next.delete(suc.id); return next; });
-  };
-
-  // Enregistrer une partie récente
-  const handleRecordGame = async (e: React.FormEvent) => {
+  const handleRecordGame = async(e:React.FormEvent)=>{
     e.preventDefault();
-    const delta = Math.max(kills - (deaths / 2), 0);
-    setLastGamePoints(delta);
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-    await supabase
-      .from('game_records')
-      .insert([
-        {
-          user_id: session.user.id,
-          player_first_name: playerName,
-          character_name: agent,
-          k: kills,
-          d: deaths,
-          points: delta,
-          game: 'Valorant',
-        },
-      ]);
-    setTotalGamePoints(prev => prev + delta);
+    const k=Number(kills)||0,d=Number(deaths)||0,a=Number(assists)||0;
+    const pts=Math.max(k-d/2+a*0.65,0);
+    setLastGamePoints(pts);
+    const { data:{session} } = await supabase.auth.getSession(); if(!session)return;
+    await supabase.from('game_records').insert([{user_id:session.user.id,player_first_name:playerName,character_name:agent,k,d,assists:a,points:pts,game:'Valorant'}]);
+    setTotalGamePoints(prev=>prev+pts);
+    setPlayerName('');setAgent('');setKills('');setDeaths('');setAssists('');
   };
 
-  // Sauvegarder le nom Valorant
-  const handleSaveAccount = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      router.replace('/login');
-      return;
-    }
-    const { error } = await supabase
-      .from('user_game_accounts')
-      .upsert(
-        { user_id: session.user.id, game: 'Valorant', account_name: account },
-        { onConflict: 'user_id,game' }
-      );
-    if (error) console.error('Erreur upsert account Valorant:', error.message);
-    else {
-      setMsg('Nom VALORANT enregistré !');
-      setTimeout(() => setMsg(''), 3000);
-    }
+  const handleSaveAccount = async()=>{
+    const { data:{session} } = await supabase.auth.getSession(); if(!session){router.replace('/login');return;}
+    await supabase.from('user_game_accounts').upsert({user_id:session.user.id,game:'Valorant',account_name:account},{onConflict:'user_id,game'});
+    setMsg('Nom VALORANT enregistré !');setTimeout(()=>setMsg(''),3000);
   };
 
-  if (loading) {
-    return (
-      <PageLayout
-        title="Valorant – Réalisations & succès"
-        bgClass="bg-gradient-to-br from-[#111214] via-[#1f1f20] to-[#111214]"
-      >
-        <p className="text-center text-white py-16">Chargement…</p>
-      </PageLayout>
-    );
-  }
+  const filtered = useMemo(() =>
+    successes.filter(s=>s.title.toLowerCase().includes(searchTerm.toLowerCase())||s.description.toLowerCase().includes(searchTerm.toLowerCase())),
+    [successes,searchTerm]
+  );
+
+  if(loading) return (
+    <div className="flex items-center justify-center h-screen bg-black">
+      <p className="text-red-500 text-2xl">Chargement…</p>
+    </div>
+  );
 
   return (
-    <PageLayout
-      title="Valorant – Réalisations & succès"
-      bgClass="bg-gradient-to-br from-[#111214] via-[#1f1f20] to-[#111214]"
-    >
-      <div className="relative w-full flex flex-col md:flex-row gap-8 px-4 py-12">
-        {/* Colonne gauche – Partie & compte */}
-        <div className="w-full md:basis-2/5 flex flex-col gap-8">
-          {/* Enregistrer une partie récente */}
-          <section className="bg-black bg-opacity-50 backdrop-blur-sm ring-2 ring-red-500 p-8 rounded-xl shadow-xl">
-            <h2 className="text-3xl font-semibold text-red-400 mb-6">
-              Enregistrer une partie récente
-            </h2>
-            <form onSubmit={handleRecordGame} className="space-y-6">
-              <div>
-                <label className="block text-white mb-2">Prénom du joueur</label>
-                <input
-                  type="text"
-                  value={playerName}
-                  onChange={e => setPlayerName(e.target.value)}
-                  required
-                  placeholder="Ex : Alex"
-                  className="w-full p-3 rounded bg-gray-800 text-white focus:outline-none"
-                />
+    <>
+      {/* Background VALORANT */}
+      <div className="fixed inset-0 bg-cover bg-center" style={{backgroundImage:"url('/images/valorant-bg.jpg')"}} />
+      {/* Header */}
+      <header className="relative z-10 p-4 bg-black/70 backdrop-blur-md border-b border-red-600">
+        <h1 className="text-4xl font-bold text-red-500">VALORANT – Succès et réalisations</h1>
+      </header>
+      {/* Main */}
+      <main className="relative z-10 flex flex-col md:flex-row gap-8 p-8 text-lg text-white">
+        {/* Left Column */}
+        <aside className="md:w-2/5 flex flex-col gap-8">
+          {/* Record Game */}
+          <section className="bg-gray-900 bg-opacity-60 backdrop-blur-sm ring-2 ring-red-600 p-6 rounded-xl shadow-lg">
+            <h2 className="text-2xl font-semibold text-red-400 mb-4">Enregistrer une partie</h2>
+            <form onSubmit={handleRecordGame} className="space-y-4">
+              <input type="text" value={playerName} onChange={e=>setPlayerName(e.target.value)} placeholder="Prénom" className="w-full p-3 rounded bg-gray-800" required />
+              <input type="text" value={agent} onChange={e=>setAgent(e.target.value)} placeholder="Agent" className="w-full p-3 rounded bg-gray-800" required />
+              <div className="grid grid-cols-3 gap-2">
+                <input type="number" value={kills} onChange={e=>setKills(e.target.value)} placeholder="K" className="p-3 rounded bg-gray-800" />
+                <input type="number" value={deaths} onChange={e=>setDeaths(e.target.value)} placeholder="D" className="p-3 rounded bg-gray-800" />
+                <input type="number" value={assists} onChange={e=>setAssists(e.target.value)} placeholder="A" className="p-3 rounded bg-gray-800" />
               </div>
-              <div>
-                <label className="block text-white mb-2">Agent joué</label>
-                <input
-                  type="text"
-                  value={agent}
-                  onChange={e => setAgent(e.target.value)}
-                  required
-                  placeholder="Ex : Jett"
-                  className="w-full p-3 rounded bg-gray-800 text-white focus:outline-none"
-                />
-              </div>
-              <div className="flex flex-col sm:flex-row gap-6">
-                <div className="flex-1">
-                  <label className="block text-white mb-2">Kills (K)</label>
-                  <input
-                    type="number"
-                    value={kills}
-                    onChange={e => setKills(+e.target.value)}
-                    min={0}
-                    className="w-full p-3 rounded bg-gray-800 text-white focus:outline-none"
-                  />
-                </div>
-                <div className="flex-1">
-                  <label className="block text-white mb-2">Deaths (D)</label>
-                  <input
-                    type="number"
-                    value={deaths}
-                    onChange={e => setDeaths(+e.target.value)}
-                    min={0}
-                    className="w-full p-3 rounded bg-gray-800 text-white focus:outline-none"
-                  />
-                </div>
-              </div>
-              <button
-                type="submit"
-                className="w-full py-4 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition"
-              >
-                Enregistrer la partie
-              </button>
+              <button type="submit" className="w-full py-3 bg-red-600 hover:bg-red-700 rounded-lg font-bold">Enregistrer</button>
             </form>
             <p className="mt-4 text-white/70 text-sm">
-              Points = <code>K–(D/2)</code> (seules les valeurs positives sont ajoutées).
-            </p>
-            {lastGamePoints !== null && (
-              <p className="mt-3 text-white">
-                Dernière partie : <strong>+{lastGamePoints} pts</strong>
-              </p>
-            )}
-            <p className="mt-1 text-white/80">
-              Total points parties : <strong>{totalGamePoints}</strong>
-            </p>
+  Points = <code>K - (D/2) + (A × 0,65)</code> (valeur minimale 0).
+</p>
+{lastGamePoints !== null && (
+  <p className="mt-3 text-white">
+    Dernière partie : <strong>+{lastGamePoints} pts</strong>
+  </p>
+)}
+<p>Total parties: <strong>{totalGamePoints}</strong></p>
           </section>
-
-          {/* Enregistrer nom Valorant */}
-          <section className="bg-black bg-opacity-50 backdrop-blur-sm ring-2 ring-red-500 p-6 rounded-xl shadow-xl">
-            <h3 className="text-2xl font-medium text-red-400 mb-4">
-              Nom de joueur VALORANT
-            </h3>
+          {/* Account */}
+          <section className="bg-gray-900 bg-opacity-60 backdrop-blur-sm ring-2 ring-red-600 p-6 rounded-xl shadow-lg">
+            <h3 className="text-xl text-red-400 mb-3">Compte VALORANT</h3>
             <div className="flex gap-2">
-              <input
-                type="text"
-                value={account}
-                onChange={e => setAccount(e.target.value)}
-                placeholder="Ex : Jett#1234"
-                className="flex-1 p-3 rounded bg-gray-800 text-white focus:outline-none"
-              />
-              <button
-                onClick={handleSaveAccount}
-                className="px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition"
-              >
-                Sauvegarder
-              </button>
+              <input type="text" value={account} onChange={e=>setAccount(e.target.value)} placeholder="Ex: Jett#1234" className="flex-1 p-3 rounded bg-gray-800" />
+              <button onClick={handleSaveAccount} className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg">Sauvegarder</button>
             </div>
-            {msg && <p className="mt-3 text-red-300">{msg}</p>}
+            {msg && <p className="mt-2 text-red-300">{msg}</p>}
           </section>
-
-          {/* Nouveau : Sous-total Valorant */}
-          <section className="bg-black bg-opacity-50 backdrop-blur-sm ring-2 ring-red-500 p-6 rounded-xl shadow-xl">
-            <h3 className="text-xl font-medium text-red-400 mb-2">
-              Sous-total Valorant
-            </h3>
-            <p className="text-2xl font-bold text-white">{subTotalValorant} pts</p>
+          {/* Subtotal */}
+          <section className="bg-gray-900 bg-opacity-60 backdrop-blur-sm ring-2 ring-red-600 p-6 rounded-xl shadow-lg">
+            <h3 className="text-xl text-red-400 mb-2">Sous-total</h3>
+            <p className="text-2xl font-bold">{subTotalValorant} pts</p>
           </section>
-        </div>
-
-        {/* Colonne droite – Succès */}
-        <section className="w-full md:basis-3/5 bg-black bg-opacity-50 backdrop-blur-sm ring-2 ring-red-500 p-8 rounded-xl shadow-xl overflow-auto">
-          <h2 className="text-3xl font-semibold text-red-400 mb-6">
-            Succès VALORANT
-          </h2>
-          <h3>Connectez vous pour voir ou valider les succès.</h3>
+        </aside>
+        {/* Right Column Successes */}
+        <section className="flex-1 bg-gray-900 bg-opacity-60 backdrop-blur-sm ring-2 ring-red-600 p-8 rounded-xl shadow-lg overflow-auto">
+          <h2 className="text-2xl text-red-400 mb-4">Succès VALORANT</h2>
+          <input type="text" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} placeholder="Recherche…" className="w-full mb-4 p-3 rounded bg-gray-800" />
           <ul className="space-y-4">
-            {successes.map(suc => {
-              const done = doneIds.has(suc.id);
+            {filtered.map(s=>{
+              const done=doneIds.has(s.id);
               return (
-                <li
-                  key={suc.id}
-                  className="flex items-start justify-between bg-gray-800 p-4 rounded-lg"
-                >
-                  <div className="pr-4">
-                    <h3 className="font-semibold text-white">{suc.title}</h3>
-                    <p className="text-sm text-gray-400">{suc.description}</p>
+                <li key={s.id} className="flex justify-between bg-gray-800 p-4 rounded-lg">
+                  <div>
+                    <h3 className="font-semibold text-white">{s.title}</h3>
+                    <p className="text-gray-400 text-sm">{s.description}</p>
                   </div>
                   <div className="flex flex-col items-end gap-2">
-                    <span className="text-red-400 font-bold">+{suc.points} pts</span>
-                    {done ? (
-                      <button
-                        onClick={() => handleUnvalidateSuccess(suc)}
-                        className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 transition"
-                      >
-                        Annuler
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleValidateSuccess(suc)}
-                        className="px-4 py-2 rounded bg-red-500 text-white hover:bg-red-600 transition"
-                      >
-                        Valider
-                      </button>
-                    )}
+                    <span className="text-red-400">+{s.points}</span>
+                    {done
+                      ? <button onClick={()=>handleUnvalidateSuccess(s)} className="px-3 py-1 bg-gray-700 rounded">Annuler</button>
+                      : <button onClick={()=>handleValidateSuccess(s)} className="px-3 py-1 bg-red-600 rounded">Valider</button>
+                    }
                   </div>
                 </li>
               );
             })}
+            {filtered.length===0 && <li className="text-gray-400 text-center">Aucun succès.</li>}
           </ul>
         </section>
-      </div>
-    </PageLayout>
+      </main>
+      {/* Footer */}
+      <footer className="text-center py-4 relative z-10">
+        <Link href="/achivements" className="text-red-400 hover:underline">← Retour catégories</Link>
+      </footer>
+    </>
   );
 }

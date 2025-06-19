@@ -14,8 +14,8 @@ export default function RoadmapPage() {
     '2025-06-16': 'Ajout des catégories : « LOL », « VALORANT » et « Musculation ».',
     '2025-06-17': 'Correction du tableau de classement. Activation du bonus/malus de choix du profil (Joueur / Sportif). Ajout du calcul des points dans la catégorie Musculation. Ajout du bouton des demandes.',
     '2025-06-18': 'Sortie de la version 1.1 : Ajout de la catégorie « Escalade ».',
-    '2025-06-19': 'Amélioration de la page « Musculation » : ajout d’exercices spécifiques et de réalisations spéciales (poids lourds).',
-    '2025-06-20': 'Refonte de la page LOL et VALORANT pour une meilleure clarté.',
+    '2025-06-19': 'Refonte de la page LOL et VALORANT pour une meilleure clarté.',
+    '2025-06-20': 'Amélioration de la page « Musculation » : ajout d’exercices spécifiques et de réalisations spéciales (poids lourds).',
     '2025-06-21': 'Ajout de l\'onglet TFT sur le jeu League of Legends.',
     '2025-06-22': 'Sortie de la version 1.2 : Ajout dans la catégorie eSport de Overwatch 2 et dans la catégorie Sport du Cyclisme. Ajout des événements limités (un nouvel événement est déjà disponible !). Ajout de nouveaux succès pour toutes les catégories.'
   };
