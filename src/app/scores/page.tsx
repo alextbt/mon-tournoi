@@ -32,64 +32,87 @@ export default function ScoresPage() {
 
   useEffect(() => {
     (async () => {
+      // 1. Récupérer les points bruts
       const { data: pts, error: ptsErr } = await supabase
         .from('user_points')
-        .select('user_id, total_points, esports_points, sport_points');
-      if (ptsErr || !pts) { console.error(ptsErr); setLoading(false); return; }
+        .select(`
+          user_id,
+          lol_points,
+          valorant_points,
+          escalade_points,
+          escalade_voie_points,
+          musculation_points
+        `);
+      if (ptsErr || !pts) {
+        console.error(ptsErr);
+        setLoading(false);
+        return;
+      }
+
+      // 2. Récupérer les profils
       const ids = pts.map(r => r.user_id);
       const { data: profs, error: profErr } = await supabase
         .from('profiles')
         .select('id, first_name, profile_style')
         .in('id', ids);
-      if (profErr || !profs) { console.error(profErr); setLoading(false); return; }
-      const map = Object.fromEntries(
+      if (profErr || !profs) {
+        console.error(profErr);
+        setLoading(false);
+        return;
+      }
+      const mapProf = Object.fromEntries(
         profs.map(p => [p.id, { first_name: p.first_name, profile_style: p.profile_style }])
       );
 
+      // 3. Construire le classement
       const list: LeaderboardEntry[] = pts.map(r => {
-        const { first_name = '—', profile_style = 'Aucune' } = map[r.user_id] || {};
-        const esport = r.esports_points ?? 0;
-        const sport = r.sport_points ?? 0;
-        const total = r.total_points ?? 0;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const mod = computeModified(profile_style as any, esport, sport);
+        const { first_name = '—', profile_style = 'Aucune' } =
+          mapProf[r.user_id] || {};
+
+        // Calcul des sous-scores
+        const esport =
+          (r.lol_points ?? 0) + (r.valorant_points ?? 0);
+        const sport =
+          (r.escalade_points ?? 0)
+          + (r.escalade_voie_points ?? 0)
+          + (r.musculation_points ?? 0);
+        const total = esport + sport;
+
+        const modifiedTotal = computeModified(profile_style, esport, sport);
+
         return {
           user_id: r.user_id,
           first_name,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          profile_style: profile_style as any,
+          profile_style,
           esport,
           sport,
           total,
-          modifiedTotal: mod,
+          modifiedTotal,
           movement: null,
         };
       });
 
+      // 4. Tri par score effectif
       list.sort((a, b) => {
-  // si un joueur a un total modifié, on l’utilise ; sinon on retombe sur le total standard
-  const aScore = a.modifiedTotal !== null ? a.modifiedTotal : a.total;
-  const bScore = b.modifiedTotal !== null ? b.modifiedTotal : b.total;
-  return bScore - aScore;
-});
-const prev = JSON.parse(localStorage.getItem('__prevLeaderboard__') || '[]') as string[];
-const prevPos = Object.fromEntries(prev.map((id, i) => [id, i]));
+        const aScore = a.modifiedTotal ?? a.total;
+        const bScore = b.modifiedTotal ?? b.total;
+        return bScore - aScore;
+      });
 
-list.forEach((e, idx) => {
-  const prevIndex = prevPos[e.user_id];
-  if (prevIndex === undefined || prevIndex === idx) {
-    e.movement = null;
-  } else if (idx < prevIndex) {
-    e.movement = 'up';
-  } else {
-    e.movement = 'down';
-  }
-});
-
-localStorage.setItem(
-  '__prevLeaderboard__',
-  JSON.stringify(list.map(e => e.user_id))
-);
+      // 5. Calcul du mouvement
+      const prev = JSON.parse(
+        localStorage.getItem('__prevLeaderboard__') || '[]'
+      ) as string[];
+      const prevPos = Object.fromEntries(prev.map((id, i) => [id, i]));
+      list.forEach((e, idx) => {
+        const old = prevPos[e.user_id];
+        if (old === undefined || old === idx) e.movement = null;
+        else e.movement = idx < old ? 'up' : 'down';
+      });
+      localStorage.setItem(
+        '__prevLeaderboard__',
+        JSON.stringify(list.map(e => e.user_id))
+      );
 
       setEntries(list);
       setLoading(false);
@@ -126,17 +149,32 @@ localStorage.setItem(
             <tbody>
               {entries.map((e, i) => (
                 <tr key={e.user_id} className={i % 2 === 0 ? 'bg-white/5' : ''}>
-                  <td className="px-4 py-2">#{i + 1} {e.movement === 'up' ? '🔼' : e.movement === 'down' ? '🔽' : ''}</td>
+                  <td className="px-4 py-2">
+                    #{i + 1}{' '}
+                    {e.movement === 'up'
+                      ? '🔼'
+                      : e.movement === 'down'
+                      ? '🔽'
+                      : ''}
+                  </td>
                   <td className="px-4 py-2">{e.first_name}</td>
                   <td className="px-4 py-2 text-center">{e.profile_style}</td>
                   <td className="px-4 py-2 text-right">{e.esport}</td>
                   <td className="px-4 py-2 text-right">{e.sport}</td>
                   <td className="px-4 py-2 text-right font-bold">{e.total}</td>
                   <td className="px-4 py-2 text-right font-semibold">
-                    {e.modifiedTotal == null ? '—' : (
-                      <span className={
-                        e.modifiedTotal > e.total ? 'text-green-300' : e.modifiedTotal < e.total ? 'text-red-300' : 'text-white'
-                      }>
+                    {e.modifiedTotal == null ? (
+                      '—'
+                    ) : (
+                      <span
+                        className={
+                          e.modifiedTotal > e.total
+                            ? 'text-green-300'
+                            : e.modifiedTotal < e.total
+                            ? 'text-red-300'
+                            : 'text-white'
+                        }
+                      >
                         {e.modifiedTotal}
                       </span>
                     )}

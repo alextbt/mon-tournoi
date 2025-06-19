@@ -47,11 +47,11 @@ export default function ProfilePage() {
       if (profErr) console.error('Erreur profile:', profErr.message);
       setFirstName(profRow?.first_name ?? 'Utilisateur');
 
-      // 3) Sous-totaux et total
+      // 3) Sous-totaux calculés et breakdown
       const { data: ptsData, error: ptsErr } = await supabase
         .from('user_points')
         .select(
-          'lol_points, valorant_points, musculation_points, escalade_points, esports_points, sport_points, total_points'
+          'lol_points, valorant_points, escalade_points, escalade_voie_points, musculation_points'
         )
         .eq('user_id', userId)
         .maybeSingle();
@@ -59,28 +59,30 @@ export default function ProfilePage() {
       const {
         lol_points = 0,
         valorant_points = 0,
-        musculation_points = 0,
         escalade_points = 0,
-        esports_points = 0,
-        sport_points = 0,
-        total_points = 0,
+        escalade_voie_points = 0,
+        musculation_points = 0,
       } = ptsData || {};
 
-      setTotalPoints(total_points);
-      setSubTotalEsport(esports_points);
-      setSubTotalSport(sport_points);
+      const esport = lol_points + valorant_points;
+      const sport = escalade_points + escalade_voie_points + musculation_points;
+      const total = esport + sport;
+
+      setSubTotalEsport(esport);
+      setSubTotalSport(sport);
+      setTotalPoints(total);
       setBreakdown([
         { category: 'LoL', points: lol_points },
         { category: 'Valorant', points: valorant_points },
         { category: 'Musculation', points: musculation_points },
-        { category: 'Escalade', points: escalade_points },
+        { category: 'Escalade', points: escalade_points + escalade_voie_points },
       ]);
 
       // 4) Rang
       const { count: higherCount } = await supabase
         .from('user_points')
         .select('*', { head: true, count: 'exact' })
-        .gt('total_points', total_points);
+        .gt('total_points', total);
       setRank((higherCount ?? 0) + 1);
 
       // 5) Achievements détaillés
@@ -92,9 +94,7 @@ export default function ProfilePage() {
       setAchievements(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (rawAch || []).map((u: any) => {
-          const ach = Array.isArray(u.achievements)
-            ? u.achievements[0]
-            : u.achievements;
+          const ach = Array.isArray(u.achievements) ? u.achievements[0] : u.achievements;
           return {
             id: u.achievement_id,
             title: ach?.title ?? '—',
