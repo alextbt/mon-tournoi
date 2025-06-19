@@ -1,7 +1,7 @@
 // src/app/lol/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import PageLayout from '@/components/PageLayout';
 import Link from 'next/link';
@@ -13,11 +13,10 @@ type Role = typeof ROLES[number];
 type Success = {
   id: number;
   role: Role;
-  title: string;
-  description: string;
+  title: string | null;
+  description: string | null;
   points: number;
 };
-type UserSuccess = { success_id: number };
 
 type GameRecord = { points: number };
 
@@ -27,29 +26,21 @@ export default function LolPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [successes, setSuccesses] = useState<Success[]>([]);
   const [doneIds, setDoneIds] = useState<Set<number>>(new Set());
-
-  // Partie
   const [playerName, setPlayerName] = useState('');
   const [character, setCharacter] = useState('');
-  const [kills, setKills] = useState<string>('');
-  const [deaths, setDeaths] = useState<string>('');
-  const [assists, setAssists] = useState<string>('');
+  const [kills, setKills] = useState('');
+  const [deaths, setDeaths] = useState('');
+  const [assists, setAssists] = useState('');
   const [lastGamePoints, setLastGamePoints] = useState<number | null>(null);
   const [totalGamePoints, setTotalGamePoints] = useState(0);
-
-  // Compte et sous-total
   const [account, setAccount] = useState('');
   const [msg, setMsg] = useState('');
   const [subTotalLol, setSubTotalLol] = useState(0);
 
-  // Chargement initial
   useEffect(() => {
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setLoading(false);
-        return;
-      }
+      if (!session) { setLoading(false); return; }
       const userId = session.user.id;
 
       // 1. Charger succès
@@ -67,7 +58,7 @@ export default function LolPage() {
         .select('success_id')
         .eq('user_id', userId);
       if (uError) console.error('Erreur fetch user_successes:', uError.message);
-      else setDoneIds(new Set((rawUser as UserSuccess[]).map(u => u.success_id)));
+      else setDoneIds(new Set((rawUser as { success_id: number }[]).map(u => u.success_id)));
 
       // 3. Compte LoL
       const { data: accData } = await supabase
@@ -107,7 +98,7 @@ export default function LolPage() {
       await supabase
         .from('user_points')
         .upsert(
-          { user_id: session.user.id, lol_points: total }, // pas de shorthand ici
+          { user_id: session.user.id, lol_points: total },
           { onConflict: 'user_id' }
         );
     })();
@@ -132,7 +123,7 @@ export default function LolPage() {
     } else {
       await supabase
         .from('user_successes')
-        .insert({ user_id: userId, success_id: suc.id }); // explicit mapping
+        .insert({ user_id: userId, success_id: suc.id });
       setDoneIds(prev => new Set(prev).add(suc.id));
     }
   };
@@ -153,19 +144,17 @@ export default function LolPage() {
     await supabase
       .from('game_records')
       .insert([{
-        user_id: userId,                // explicit mapping
+        user_id: userId,
         player_first_name: playerName,
         character_name: character,
-        k, d, assists: a,
+        k,
+        d,
+        assists: a,
         points: pts,
         game: 'LoL',
       }]);
     setTotalGamePoints(prev => prev + pts);
-    setPlayerName('');
-    setCharacter('');
-    setKills('');
-    setDeaths('');
-    setAssists('');
+    setPlayerName(''); setCharacter(''); setKills(''); setDeaths(''); setAssists('');
   };
 
   // Sauvegarder compte
@@ -177,13 +166,26 @@ export default function LolPage() {
     await supabase
       .from('user_game_accounts')
       .upsert(
-        { user_id: userId, game: 'LoL', account_name: account }, // explicit mapping
+        { user_id: userId, game: 'LoL', account_name: account },
         { onConflict: 'user_id,game' }
       );
 
     setMsg('Nom de joueur enregistré !');
     setTimeout(() => setMsg(''), 3000);
   };
+
+  // Filtrage sécurisé contre null
+  const filtered = useMemo(() =>
+    successes
+      .filter(s => s.role === roleFilter)
+      .filter(s => {
+        const title = s.title ?? '';
+        const desc = s.description ?? '';
+        const term = searchTerm.toLowerCase();
+        return title.toLowerCase().includes(term) || desc.toLowerCase().includes(term);
+      }),
+    [successes, roleFilter, searchTerm]
+  );
 
   if (loading) {
     return (
@@ -192,14 +194,6 @@ export default function LolPage() {
       </PageLayout>
     );
   }
-
-  // Filtrage succès
-  const filtered = successes
-    .filter(s => s.role === roleFilter)
-    .filter(s =>
-      s.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.description.toLowerCase().includes(searchTerm.toLowerCase())
-    );
 
   return (
     <>
@@ -368,10 +362,8 @@ export default function LolPage() {
           </ul>
         </section>
       </main>
-      <footer className="text-center mt-8 relative z-10">
-        <Link href="/achivements" className="text-yellow-300 hover:underline font-semibold">
-          ← Retour aux catégories
-        </Link>
+      <footer className="text-center py-4 bg-blue-900/80" style={{fontFamily:'Beaufort, serif'}}>
+        <Link href="/achivements" className="text-hextech-blue hover:underline">← Retour catégories</Link>
       </footer>
     </>
   );
