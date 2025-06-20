@@ -10,6 +10,7 @@ type Achievement = {
   title: string;
   points: number;
   achieved_at: string;
+  status: 'pending' | 'accepted' | 'refused';
 };
 
 type BreakdownItem = {
@@ -23,7 +24,7 @@ export default function ProfilePage() {
   const [totalPoints, setTotalPoints] = useState(0);
   const [subTotalEsport, setSubTotalEsport] = useState(0);
   const [subTotalSport, setSubTotalSport] = useState(0);
-  const [rank, setRank] = useState<number>(0);
+  const [subTotalAchievements, setSubTotalAchievements] = useState(0);
   const [breakdown, setBreakdown] = useState<BreakdownItem[]>([]);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const router = useRouter();
@@ -38,20 +39,11 @@ export default function ProfilePage() {
       }
       const userId = session.user.id;
 
-      // 2) Prénom
-      const { data: profRow, error: profErr } = await supabase
-        .from('profiles')
-        .select('first_name')
-        .eq('id', userId)
-        .maybeSingle();
-      if (profErr) console.error('Erreur profile:', profErr.message);
-      setFirstName(profRow?.first_name ?? 'Utilisateur');
-
-      // 3) Sous-totaux calculés et breakdown
+      // 2) Load aggregated points
       const { data: ptsData, error: ptsErr } = await supabase
         .from('user_points')
         .select(
-          'lol_points, valorant_points, escalade_points, escalade_voie_points, musculation_points'
+          'lol_points, valorant_points, escalade_points, escalade_voie_points, musculation_points, achievements_points, total_points'
         )
         .eq('user_id', userId)
         .maybeSingle();
@@ -62,47 +54,85 @@ export default function ProfilePage() {
         escalade_points = 0,
         escalade_voie_points = 0,
         musculation_points = 0,
+        achievements_points = 0,
+        total_points = 0,
       } = ptsData || {};
 
-      const esport = lol_points + valorant_points;
-      const sport = escalade_points + escalade_voie_points + musculation_points;
-      const total = esport + sport;
+      setSubTotalEsport(lol_points + valorant_points);
+      setSubTotalSport(escalade_points + escalade_voie_points + musculation_points);
+      setSubTotalAchievements(achievements_points);
+      setTotalPoints(total_points);
 
-      setSubTotalEsport(esport);
-      setSubTotalSport(sport);
-      setTotalPoints(total);
       setBreakdown([
         { category: 'LoL', points: lol_points },
         { category: 'Valorant', points: valorant_points },
         { category: 'Musculation', points: musculation_points },
         { category: 'Escalade', points: escalade_points + escalade_voie_points },
+        { category: 'Réalisations', points: achievements_points },
       ]);
 
-      // 4) Rang
-      const { count: higherCount } = await supabase
-        .from('user_points')
-        .select('*', { head: true, count: 'exact' })
-        .gt('total_points', total);
-      setRank((higherCount ?? 0) + 1);
+      // 3) Profile name
+      const { data: profRow, error: profErr } = await supabase
+        .from('profiles')
+        .select('first_name')
+        .eq('id', userId)
+        .maybeSingle();
+      if (profErr) console.error('Erreur profile:', profErr.message);
+      setFirstName(profRow?.first_name ?? 'Utilisateur');
 
-      // 5) Achievements détaillés
-      const { data: rawAch, error: achErr } = await supabase
+      // 4) Pending achievements
+      const { data: pending, error: pendErr } = await supabase
+        .from('achievements')
+        .select('id, achievement, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      if (pendErr) console.error('Erreur pending achievements:', pendErr.message);
+
+      // 5) Processed achievements
+      const { data: processed, error: procErr } = await supabase
         .from('user_achievements')
-        .select('achievement_id, achieved_at, achievements ( title, points )')
-        .eq('user_id', userId);
-      if (achErr) console.error('Erreur achievements:', achErr.message);
-      setAchievements(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (rawAch || []).map((u: any) => {
-          const ach = Array.isArray(u.achievements) ? u.achievements[0] : u.achievements;
-          return {
-            id: u.achievement_id,
-            title: ach?.title ?? '—',
-            points: ach?.points ?? 0,
-            achieved_at: u.achieved_at,
-          };
-        })
-      );
+        .select('id, achievement, points, achieved_at, result')
+        .eq('user_id', userId)
+        .order('achieved_at', { ascending: false });
+      if (procErr) console.error('Erreur user_achievements:', procErr.message);
+
+      // 6) Combine and filter
+      const processedMap = new Set<string>();
+      if (processed) {
+        for (const v of processed) {
+          processedMap.add(v.achievement);
+        }
+      }
+      const list: Achievement[] = [];
+
+      // include only pending not yet processed
+      if (pending) {
+        for (const p of pending) {
+          if (!processedMap.has(p.achievement)) {
+            list.push({
+              id: p.id,
+              title: p.achievement,
+              points: 0,
+              achieved_at: p.created_at,
+              status: 'pending',
+            });
+          }
+        }
+      }
+
+      // add processed
+      if (processed) {
+        for (const v of processed) {
+          list.push({
+            id: v.id,
+            title: v.achievement,
+            points: v.points,
+            achieved_at: v.achieved_at,
+            status: v.result === 'accepted' ? 'accepted' : 'refused',
+          });
+        }
+      }
+      setAchievements(list);
 
       setLoading(false);
     })();
@@ -126,16 +156,16 @@ export default function ProfilePage() {
       <div className="max-w-4xl mx-auto bg-bg-mid rounded-xl shadow-lg overflow-hidden">
         {/* Header */}
         <div className="relative bg-gradient-to-r from-purple-700 to-pink-600 p-8 flex items-center justify-between">
-          <div className="flex items-baseline space-x-3">
-            <h1 className="text-3xl font-bold text-white">{firstName}</h1>
-            <span className="text-white/80 text-lg">| Position #{rank}</span>
-          </div>
-          <button onClick={handleLogout} className="bg-opacity-20 text-white px-4 py-2 rounded-lg hover:bg-opacity-30 transition">
+          <h1 className="text-3xl font-bold text-white">{firstName}</h1>
+          <button
+            onClick={handleLogout}
+            className="bg-opacity-20 text-white px-4 py-2 rounded-lg hover:bg-opacity-30 transition"
+          >
             Déconnexion
           </button>
         </div>
 
-        {/* Stats globales */}
+        {/* Scores */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-bg-mid p-6">
           <div className="text-center">
             <p className="text-sm text-white/70">Total des points</p>
@@ -147,18 +177,21 @@ export default function ProfilePage() {
             <p className="text-sm text-white/70 mt-2">Sous-total Sport</p>
             <p className="text-xl font-bold text-white">{subTotalSport}</p>
           </div>
-          <div className="text-center">
-            <p className="text-sm text-white/70">Nombre de catégories</p>
-            <p className="text-2xl font-extrabold text-white">{breakdown.length}</p>
+          <div className="text-center space-y-1">
+            <p className="text-sm text-white/70">Sous-total Réalisations</p>
+            <p className="text-xl font-bold text-white">{subTotalAchievements}</p>
           </div>
         </div>
 
-        {/* Breakdown par catégorie */}
+        {/* Breakdown */}
         <section className="bg-bg-light p-6 space-y-4">
           <h2 className="text-xl font-semibold text-white mb-2">Points par catégorie</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
             {breakdown.map(item => (
-              <div key={item.category} className="p-4 bg-bg-mid rounded-lg text-white text-center">
+              <div
+                key={item.category}
+                className="p-4 bg-bg-mid rounded-lg text-white text-center"
+              >
                 <p className="font-medium">{item.category}</p>
                 <p className="mt-1 text-lg font-bold">{item.points} pts</p>
               </div>
@@ -166,22 +199,54 @@ export default function ProfilePage() {
           </div>
         </section>
 
-        {/* Réalisations validées */}
+        {/* Achievements */}
         <section className="bg-bg-mid p-6 space-y-4">
-          <h2 className="text-xl font-semibold text-white mb-2">Réalisations validées</h2>
+          <h2 className="text-xl font-semibold text-white mb-2">Réalisations</h2>
           {achievements.length === 0 ? (
-            <p className="text-white/70">Aucune réalisation pour l’instant.</p>
+            <p className="text-white/70">Aucune réalisation.</p>
           ) : (
             <ul className="space-y-3">
               {achievements.map(a => (
-                <li key={a.id} className="flex justify-between p-4 bg-bg-light rounded-lg text-white">
+                <li
+                  key={`${a.status}-${a.id}`}  
+                  className="flex justify-between p-4 bg-bg-light rounded-lg"
+                >
                   <div>
-                    <p>{a.title}</p>
+                    <p
+                      className={
+                        a.status === 'pending'
+                          ? 'italic text-white/70'
+                          : a.status === 'accepted'
+                          ? 'text-green-300'
+                          : 'text-red-300'
+                      }
+                    >
+                      {a.title} {' '}
+                      {a.status === 'pending'
+                        ? '(en attente)'
+                        : a.status === 'accepted'
+                        ? '(accepté)'
+                        : '(refusé)'}
+                    </p>
                     <p className="text-sm text-white/70">
                       le {new Date(a.achieved_at).toLocaleDateString('fr-FR')}
                     </p>
                   </div>
-                  <span className="font-semibold">+{a.points} pts</span>
+                  <span
+                    className={
+                      a.status === 'pending'
+                        ? 'text-yellow-300'
+                        : a.status === 'accepted'
+                        ? 'font-semibold text-green-300'
+                        : 'font-semibold text-red-300'
+                    }
+                  >
+                    {a.status === 'pending'
+                      ? '—'
+                      : a.status === 'accepted'
+                      ? `+${a.points} pts`
+                      : '✖'}
+                  </span>
                 </li>
               ))}
             </ul>
