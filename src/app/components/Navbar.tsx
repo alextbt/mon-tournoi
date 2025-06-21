@@ -114,6 +114,9 @@ export default function Navbar() {
             <Link href="/achivements/sport/musculation" className="btn-nav text-sm block" onClick={handleNavClick}>
               Musculation 
             </Link>
+            <Link href="/achivements/sport/escalade" className="btn-nav text-sm block" onClick={handleNavClick}>
+              Escalade 
+            </Link>
             <Link href="/rules" className="btn-nav text-sm block" onClick={handleNavClick}>
               Règles
             </Link>
