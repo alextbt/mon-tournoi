@@ -100,7 +100,7 @@ export default function StepsEventPage() {
           Un grand pas pour l&apos;humanité !
         </h1>
         <p className="text-lg text-green-800 text-center px-6">
-          Cet événement est collaboratif. Faites progresser tous ensemble la jauge des pas pour obtenir des récompenses.
+          Cet événement est collaboratif. Faites progresser tous ensemble la jauge des pas pour obtenir des récompenses. Vous pouvez rentrer vos pas depuis le dimanche 22 juin.
         </p>
 
         {/* Barre totale */}
@@ -192,7 +192,7 @@ export default function StepsEventPage() {
                 type="submit"
                 className="w-full py-3 bg-green-700 hover:bg-green-800 text-white font-semibold rounded-lg transition shadow-lg"
               >
-                Soumettre mes pas
+                Soumettre mes pas de la journée
               </button>
             </form>
           </section>
