@@ -7,7 +7,7 @@ import PageLayout from '@/components/PageLayout';
 import Link from 'next/link';
 
 // Rôles pour filtres de succès
-const ROLES = ['Général', 'Top', 'Jungler', 'Mid', 'Bot', 'Supp'] as const;
+const ROLES = ['Général', 'Top', 'Jungler', 'Mid', 'Bot', 'Supp', 'ARAM', 'BRAWL', 'ARENA', 'TFT'] as const;
 type Role = typeof ROLES[number];
 
 type Success = {

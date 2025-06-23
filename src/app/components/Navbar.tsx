@@ -8,7 +8,9 @@ export default function Navbar() {
   const [userSession, setUserSession] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [achieveOpen, setAchieveOpen] = useState(false);
+  const [eventsOpen, setEventsOpen] = useState(false);
   const achieveRef = useRef<HTMLDivElement>(null);
+  const eventsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) =>
@@ -20,11 +22,14 @@ export default function Navbar() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  // close achievements dropdown when clicking outside
+  // close dropdowns when clicking outside
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (achieveRef.current && !achieveRef.current.contains(e.target as Node)) {
         setAchieveOpen(false);
+      }
+      if (eventsRef.current && !eventsRef.current.contains(e.target as Node)) {
+        setEventsOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClick);
@@ -33,18 +38,27 @@ export default function Navbar() {
 
   const handleNavClick = () => setMenuOpen(false);
 
+  const toggleAchieve = () => {
+    setAchieveOpen(o => !o);
+    if (eventsOpen) setEventsOpen(false);
+  };
+  const toggleEvents = () => {
+    setEventsOpen(o => !o);
+    if (achieveOpen) setAchieveOpen(false);
+  };
+
   return (
     <header className="sticky top-0 w-full bg-black bg-opacity-50 backdrop-blur-md text-white px-6 py-4 flex items-center justify-between z-50">
       <div className="flex items-center space-x-8">
-        <Link href="/" className="text-2xl font-extrabold text-accent-purple drop-shadow-neon">
-          GTE | v1.1
+        <Link href="/" className="title">
+          GTE | v1.2
         </Link>
         {/* Desktop nav */}
         <nav className="hidden md:flex space-x-4 items-center">
           <Link href="/scores" className="btn-nav text-sm">Classement</Link>
           <div className="relative" ref={achieveRef}>
             <button
-              onClick={() => setAchieveOpen(o => !o)}
+              onClick={toggleAchieve}
               className="btn-nav text-sm flex items-center"
             >
               Réalisations & succès
@@ -53,19 +67,47 @@ export default function Navbar() {
             {achieveOpen && (
               <div className="absolute mt-2 bg-black bg-opacity-50 backdrop-blur-md rounded-lg py-2 w-48">
                 <div className="px-2 text-xs text-gray-400 uppercase">eSport</div>
-                <Link href="/achivements/gaming/lol" className="block px-4 py-1 hover:bg-bg-light" onClick={() => setAchieveOpen(false)}>
+                <Link href="/achivements/gaming/lol" className="block px-4 py-1 hover:bg-bg-light text-amber-400" onClick={() => setAchieveOpen(false)}>
                   League of Legends
                 </Link>
-                <Link href="/achivements/gaming/valorant" className="block px-4 py-1 hover:bg-bg-light" onClick={() => setAchieveOpen(false)}>
+                <Link href="/achivements/gaming/valorant" className="block px-4 py-1 hover:bg-bg-light text-red-600" onClick={() => setAchieveOpen(false)}>
                   Valorant
+                </Link>
+                <Link href="/achivements/gaming/chess" className="block px-4 py-1 hover:bg-bg-light text-white" onClick={() => setAchieveOpen(false)}>
+                  Échecs
                 </Link>
                 <div className="border-t border-gray-700 my-1"></div>
                 <div className="px-2 text-xs text-gray-400 uppercase">Sport</div>
-                <Link href="/achivements/sport/musculation" className="block px-4 py-1 hover:bg-bg-light" onClick={() => setAchieveOpen(false)}>
+                <Link href="/achivements/sport/musculation" className="block px-4 py-1 hover:bg-bg-light text-cyan-100" onClick={() => setAchieveOpen(false)}>
                   Musculation
                 </Link>
-                <Link href="/achivements/sport/escalade" className="block px-4 py-1 hover:bg-bg-light" onClick={() => setAchieveOpen(false)}>
+                <Link href="/achivements/sport/escalade" className="block px-4 py-1 hover:bg-bg-light text-fuchsia-800" onClick={() => setAchieveOpen(false)}>
                   Escalade
+                </Link>
+                <Link href="/achivements/sport/cyclisme" className="block px-4 py-1 hover:bg-bg-light text-stone-400" onClick={() => setAchieveOpen(false)}>
+                  Cyclisme
+                </Link>
+              </div>
+            )}
+          </div>
+          <div className="relative" ref={eventsRef}>
+            <button
+              onClick={toggleEvents}
+              className="btn-nav-event text-sm flex items-center"
+            >
+              Events
+              <span className="ml-1">▾</span>
+            </button>
+            {eventsOpen && (
+              <div className="absolute mt-2 bg-black bg-opacity-50 backdrop-blur-md rounded-lg py-2 w-48">
+                <Link href="/achivements/events/steps" className="block px-4 py-1 hover:bg-bg-light text-green-600" onClick={() => setEventsOpen(false)}>
+                  Un grand pas pour l&apos;humanité !
+                </Link>
+                <Link href="/achivements/events/hades" className="block px-4 py-1 hover:bg-bg-light text-red-700" onClick={() => setEventsOpen(false)}>
+                  Hadès
+                </Link>
+                <Link href="/achivements/events/sanctuarytempo" className="block px-4 py-1 hover:bg-bg-light text-blue-600" onClick={() => setEventsOpen(false)}>
+                  Le Sanctuaire
                 </Link>
               </div>
             )}
@@ -109,13 +151,22 @@ export default function Navbar() {
               League of Legends
             </Link>
             <Link href="/achivements/gaming/valorant" className="btn-nav text-sm block" onClick={handleNavClick}>
-              Valorant 
+              Valorant
+            </Link>
+            <Link href="/achivements/gaming/chess" className="btn-nav text-sm block" onClick={handleNavClick}>
+              Échecs
             </Link>
             <Link href="/achivements/sport/musculation" className="btn-nav text-sm block" onClick={handleNavClick}>
-              Musculation 
+              Musculation
             </Link>
             <Link href="/achivements/sport/escalade" className="btn-nav text-sm block" onClick={handleNavClick}>
-              Escalade 
+              Escalade
+            </Link>
+            <Link href="/achivements/sport/cyclisme" className="btn-nav text-sm block" onClick={handleNavClick}>
+              Cyclisme
+            </Link>
+            <Link href="/achivements/events" className="btn-nav text-sm block" onClick={handleNavClick}>
+              Events
             </Link>
             <Link href="/rules" className="btn-nav text-sm block" onClick={handleNavClick}>
               Règles
@@ -125,9 +176,6 @@ export default function Navbar() {
             </Link>
             <Link href="/issues" className="btn-nav text-sm block" onClick={handleNavClick}>
               Aide
-            </Link>
-            <Link href="https://discord.gg/mFwggMsqPx" className="btn-nav text-sm block" onClick={handleNavClick}>
-              Discord
             </Link>
           </div>
         </div>

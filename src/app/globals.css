@@ -34,3 +34,11 @@ body {
     var(--dusk-end) 100%
   );
 }
+
+@font-face {
+  font-family: "Meta";
+  src: url("https://www.axis-praxis.org/fonts/webfonts/MetaVariableDemo-Set.woff2") format("woff2");
+  font-style: normal;
+  font-weight: normal;
+}
+

@@ -103,8 +103,8 @@ export default function EscaladePage() {
     // Convertir les champs vides
     const attNum = Number(attempts) || 0;
     const climbsNum = Number(climbsCount) || 0;
-    const base: Record<string, number> = { General: 3, TresFacile: 3, Facile: 5, Normal: 20, Difficile: 35, TresDifficile: 70, Expert: 150 };
-    const bonusArr = [0, 1, 0.75, 0.5, 0.25, 0.2, 0.15, 0.1, 0.05];
+    const base: Record<string, number> = { General: 0, TresFacile: 0.5, Facile: 1.25, Normal: 2.25, Difficile: 9, TresDifficile: 15, Expert: 75 };
+    const bonusArr = [0, 3, 2.25, 1.25, 0.75, 0.25, 0.1];
     const bonus = bonusArr[attNum] || 0;
     const pts = (base[difficultySel] || 0) * (1 + bonus) * climbsNum;
     setSessionPoints(pts);

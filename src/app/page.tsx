@@ -50,6 +50,11 @@ export default function HomePage() {
                 Réalisations et succès
               </button>
             </Link>
+            <Link href="/achivements/events">
+              <button className="btn-events w-full sm:w-auto">
+                Événements
+              </button>
+            </Link>
           </div>
 
           <div className="">

@@ -9,6 +9,7 @@
   --text-color: #e0e0e0;
   --accent-color: #eb2f96;   /* Néon rose */
   --secondary-accent: #9b59b6; /* Néon violet */
+  --primary-eventcolor:#781cbe;
 }
 
 /* Application globale */
@@ -57,6 +58,20 @@ html, body {
   border-color: var(--accent-blue);
 }
 
+/* Bouton d'événement pour la navbar */
+.btn-nav-event {
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(0,0,0,0);      /* transparent de base */
+  transition: color 0.2s, border-color 0.2s;
+}
+.btn-nav-event:hover {
+  color: var(--primary-eventcolor);
+  border-color: var(--accent-blue);
+}
+
 /* Fond radial subtil pour sections */
 .bg-spatial {
   background-image: radial-gradient(circle at center, rgba(155,89,182,0.15) 0%, transparent 80%);
@@ -94,3 +109,48 @@ html, body {
   transform: translateY(-2px);
   box-shadow: 0 0 12px var(--accent-blue), 0 0 24px var(--secondary-accent);
 }
+
+.btn-events {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  font-family: 'Exo 2', sans-serif;
+  color: #fff;
+  background: linear-gradient(135deg, var(--color-purple-400), var(--color-purple-800));
+  border: none;
+  border-radius: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 0 8px var(--color-yellow-500), 0 0 16px var(--color-purple-300);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-events:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 12px var(--color-yellow-200), 0 0 24px var(--color-yellow-300);
+}
+
+/* appliquez cette classe uniquement au titre */
+.title {
+  transition: all 0.5s;
+  -webkit-text-stroke: 1px #d6f4f4;
+  font-variation-settings: "wght" 100, "ital" 1;
+  font-size: 2rem;
+  text-align: center;
+  color: transparent;
+  font-family: "Meta", sans-serif;
+  text-shadow:
+    2px 2px 0px #077acc,
+    4px 4px 0px #1f1fcd,
+    6px 6px 0px #8414e0,
+    8px 8px 0px #9415d4,
+    10px 10px 1px #c01bb8;
+  cursor: pointer;
+}
+
+.title:hover {
+  font-variation-settings: "wght" 50, "ital" 0;
+  text-shadow: none;
+}
+
