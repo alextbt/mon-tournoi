@@ -147,7 +147,7 @@ const achievementDefs: AchievementDef[] = [
   },
 ];
 
-const achievementsFns = achievementDefs.map((def) => (
+const achievementsFns = achievementDefs.map(def =>
   (_profile: Profile, stats: StatsResponse): Achievement => ({
     id: def.id,
     title: def.title,
@@ -155,7 +155,7 @@ const achievementsFns = achievementDefs.map((def) => (
     unlocked: def.check(stats),
     points: def.points,
   })
-));
+);
 
 export default function ChessPage() {
   const [username, setUsername] = useState('');
@@ -166,7 +166,7 @@ export default function ChessPage() {
   const [achievementPoints, setAchievementPoints] = useState<number>(0);
   const [grandTotal, setGrandTotal] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false)
 
   // fetch de base : profil et stats
   async function fetchProfile(user: string): Promise<Profile> {
@@ -188,16 +188,16 @@ export default function ChessPage() {
     return data.record?.win ?? data.total_solved ?? 0;
   }
 
-function computePartyPoints(st: StatsResponse): number {
-  return Object.entries(st)
-    .filter(([key]) => key.startsWith('chess_'))
-    .reduce((sum, [, s]) => {
-      const wins = s.record?.win ?? 0;
-      const losses = s.record?.loss ?? 0;
-      const draws = s.record?.draw ?? 0;
-      return sum + wins * 1.5 - losses * 0.6 + draws * 0.3;
-    }, 0);
-}
+  function computePartyPoints(st: StatsResponse): number {
+    return Object.entries(st)
+      .filter(([key]) => key.startsWith('chess_'))
+      .reduce((sum, [, s]) => {
+        const wins = s.record?.win ?? 0;
+        const losses = s.record?.loss ?? 0;
+        const draws = s.record?.draw ?? 0;
+        return sum + wins * 1.5 - losses * 0.6 + draws * 0.3;
+      }, 0);
+  }
 
   useEffect(() => {
     if (!profile || !stats) return;
@@ -255,51 +255,52 @@ function computePartyPoints(st: StatsResponse): number {
     }
   }
 
-  return (
-    <PageLayout title="Échecs - Succès et réalisations.">
-      <h1 className= "text-red-500 text-lg font-semibold text-text">Vous pouvez voir le nombre de points obtenus sur votre profil (ou sur n&apos;importe quel profil) en le recherchant. 
-        Actuellement, les points ne sont pas enregistrés entre Chess.com et votre profil. Une mise à jour arrivera bientôt qui liera votre compte Chess.com avec votre profil du tournoi. Pour plus 
-        d&apos;informations, consultez la Roadmap. Merci de votre patience.
+ return (
+    <PageLayout title="Échecs - Succès et réalisations">
+      <h1 className="text-red-500 text-lg font-semibold text-text text-center mb-6">
+        Vous pouvez voir le nombre de points obtenus sur votre profil en le recherchant. Notez que vous pourrez lier plus tard votre profil Chess.com avec votre profil du tournoi. Plus de détails sur la 
+        page Roadmap. Merci de votre patience. 
       </h1>
-      <div className="w-full p-8 space-y-8">
+      <div className="w-full max-w-3xl mx-auto p-4 space-y-6">
         {/* Recherche */}
-        <div className="flex items-center space-x-4">
+        <div className="flex flex-col sm:flex-row items-center sm:space-x-4 space-y-4 sm:space-y-0">
           <input
             type="text"
             placeholder="Nom d'utilisateur Chess.com"
             value={username}
             onChange={e => setUsername(e.target.value)}
-            className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+            className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full"
           />
           <button
             onClick={handleLoad}
             disabled={loading}
-            className="px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary-dark transition"
+            className="px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary-dark transition w-full sm:w-auto"
           >
             {loading ? 'Chargement...' : 'Afficher profil'}
           </button>
         </div>
-        {error && <p className="text-error font-medium">{error}</p>}
+        {error && <p className="text-error font-medium text-center">{error}</p>}
 
         {profile && stats && (
           <>
             {/* Profil & total échecs */}
             <div className="bg-background border border-border rounded-xl shadow-md overflow-hidden">
-              <div className="flex p-6 bg-background-light items-center">
+              <div className="flex flex-col sm:flex-row p-6 bg-background-light items-center">
                 <img
                   src={profile.avatar || '/default-avatar.svg'}
                   alt={`${profile.username} avatar`}
-                  className="w-28 h-28 rounded-full border-4 border-primary"
+                  className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-primary mb-4 sm:mb-0"
                 />
-                <div className="ml-6 flex-1">
-                  <h2 className="text-3xl font-heading text-primary-dark mb-1">{profile.username}</h2>
-                  <p className="text-lg font-semibold text-text">Total échecs: <span className="text-primary">{grandTotal} pts</span></p>
-                  <p className="text-text-muted">Profil Chess.com</p>
+                <div className="sm:ml-6 text-center sm:text-left">
+                  <h2 className="text-2xl sm:text-3xl font-heading text-primary-dark mb-1">{profile.username}</h2>
+                  <p className="text-lg font-semibold text-text">
+                    Total échecs: <span className="text-primary">{grandTotal} pts</span>
+                  </p>
                 </div>
               </div>
 
               {/* Détails des parties */}
-              <div className="grid grid-cols-4 gap-4 p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-6">
                 {['bullet', 'blitz', 'rapid', 'daily'].map(fmt => {
                   const key = `chess_${fmt}`;
                   const data = stats[key];
@@ -311,8 +312,8 @@ function computePartyPoints(st: StatsResponse): number {
                   const draws = data.record?.draw ?? 0;
                   return (
                     <div key={fmt} className="p-4 bg-surface border border-border rounded-lg text-center">
-                      <h3 className="text-xl font-semibold text-text capitalize mb-2">{fmt}</h3>
-                      <p className="font-heading text-2xl text-primary">{lastRating}</p>
+                      <h3 className="text-lg uppercase font-semibold mb-2">{fmt}</h3>
+                      <p className="font-heading text-xl text-primary mb-1">{lastRating}</p>
                       <p className="text-sm text-text-muted">Meilleur: {bestRating}</p>
                       <div className="flex justify-center space-x-2 mt-2">
                         <span className="text-success">✔ {wins}</span>
@@ -325,44 +326,40 @@ function computePartyPoints(st: StatsResponse): number {
               </div>
 
               {/* Points parties */}
-              <div className="p-6 border-t border-border">
-                <p className="text-x1 font-heading text-primary-dark">Points des parties: <strong>{partyPoints}</strong></p>
-                <p className="text-x3 font-heading text-primary-dark">Calcul des points : 1,5 (par victoire &quot;✔&quot;) - 0,6 (par défaite &quot;✘&quot;) + 0,3 (par draw &quot;=&quot;).</p>
+              <div className="p-6 border-t border-border text-center">
+                <p className="text-lg font-heading text-primary-dark">Points des parties: {partyPoints}</p>
               </div>
             </div>
 
-           {/* Succès */}
-          <div className="bg-background border rounded p-6">
-            <h3 className="text-xl font-semibold mb-4">Succès</h3>
-            <ul className="space-y-3">
-              {achievements.map(ach=> (
-                <li key={ach.id}
-                  className={`flex justify-between items-center p-3 rounded-lg shadow-sm transition 
-                    ${ach.unlocked ? 'bg-success-light border border-success' : 'bg-surface opacity-50'}`}
-                >
-                  <div>
-                    <p className="font-medium flex items-center">
-                      {ach.title}
-                      <span className="ml-2 text-sm font-bold text-primary">{ach.points} pts</span>
-                    </p>
-                    <p className="text-sm text-text-muted">{ach.description}</p>
-                  </div>
-                  {ach.unlocked && (
-                    <span className="text-success font-semibold">Validé</span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          <div className="mt-4 text-right">
-            <p className="font-semibold">
-              Total succès: {achievementPoints} pts
-            </p>
-          </div>
-        </div>
-      </>
-    )}
- {/* ← fermeture du wrapper .w-full */}
-    </div>
-  </PageLayout>
-);
+            {/* Succès */}
+            <div className="bg-background border rounded p-6">
+              <h3 className="text-xl font-semibold text-center mb-4">Succès</h3>
+              <ul className="space-y-3">
+                {achievements.map(ach => (
+                  <li key={ach.id}
+                    className={`flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 rounded-lg shadow-sm transition
+                      ${ach.unlocked ? 'bg-success-light border border-success' : 'bg-surface opacity-50'}`}
+                  >
+                    <div className="flex-1">
+                      <p className="font-medium flex items-center mb-1">
+                        {ach.title}
+                        <span className="ml-2 text-sm font-bold text-primary">{ach.points} pts</span>
+                      </p>
+                      <p className="text-sm text-text-muted">{ach.description}</p>
+                    </div>
+                    {ach.unlocked && (
+                      <span className="mt-2 sm:mt-0 text-success font-semibold">Validé</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-6 text-right">
+                <p className="text-lg font-semibold">Total succès: {achievementPoints} pts</p>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </PageLayout>
+  );
 }
