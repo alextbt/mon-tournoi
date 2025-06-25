@@ -19,121 +19,140 @@ type BreakdownItem = {
 };
 
 export default function ProfilePage() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [firstName, setFirstName] = useState('');
+
+  const [firstName, setFirstName] = useState('Utilisateur');
+  const [profileStyle, setProfileStyle] = useState<'Joueur' | 'Sportif' | 'Aucune modification'>('Aucune modification');
+
   const [totalPoints, setTotalPoints] = useState(0);
   const [subTotalEsport, setSubTotalEsport] = useState(0);
   const [subTotalSport, setSubTotalSport] = useState(0);
+  const [subTotalEvents, setSubTotalEvents] = useState(0);
   const [subTotalAchievements, setSubTotalAchievements] = useState(0);
+
   const [breakdown, setBreakdown] = useState<BreakdownItem[]>([]);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
-  const router = useRouter();
+
+  // changer de style de profil
+  const handleStyleChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newStyle = e.target.value as typeof profileStyle;
+    setProfileStyle(newStyle);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    await supabase
+      .from('profiles')
+      .update({ profile_style: newStyle })
+      .eq('id', session.user.id);
+  };
 
   useEffect(() => {
     (async () => {
-      // 1) Session & user
-      const { data: { session }, error: sessionErr } = await supabase.auth.getSession();
-      if (sessionErr || !session) {
+      // 1) session & utilisateur
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
         router.replace('/login');
         return;
       }
       const userId = session.user.id;
 
-      // 2) Load aggregated points
-      const { data: ptsData, error: ptsErr } = await supabase
+      // 2) load user_points (avec cycling_points et chess_points)
+      const { data: ptsData } = await supabase
         .from('user_points')
-        .select(
-          'lol_points, valorant_points, escalade_points, escalade_voie_points, musculation_points, achievements_points, total_points'
-        )
+        .select(`
+          lol_points,
+          valorant_points,
+          chess_points,
+          escalade_points,
+          escalade_voie_points,
+          musculation_points,
+          cyclisme_points,
+          event_points,
+          achievements_points,
+          total_points
+        `)
         .eq('user_id', userId)
         .maybeSingle();
-      if (ptsErr) console.error('Erreur user_points:', ptsErr.message);
+
       const {
         lol_points = 0,
         valorant_points = 0,
+        chess_points = 0,
         escalade_points = 0,
         escalade_voie_points = 0,
         musculation_points = 0,
+        cyclisme_points = 0,
+        event_points = 0,
         achievements_points = 0,
         total_points = 0,
       } = ptsData || {};
 
-      setSubTotalEsport(lol_points + valorant_points);
-      setSubTotalSport(escalade_points + escalade_voie_points + musculation_points);
+      // Sous-totaux
+      setSubTotalEsport(lol_points + valorant_points + chess_points);
+      setSubTotalSport(escalade_points + escalade_voie_points + musculation_points + cyclisme_points);
+      setSubTotalEvents(event_points);
       setSubTotalAchievements(achievements_points);
       setTotalPoints(total_points);
 
+      // Breakdown de toutes les catégories
       setBreakdown([
         { category: 'LoL', points: lol_points },
         { category: 'Valorant', points: valorant_points },
+        { category: 'Échecs', points: chess_points },
         { category: 'Musculation', points: musculation_points },
         { category: 'Escalade', points: escalade_points + escalade_voie_points },
-        { category: 'Réalisations', points: achievements_points },
+        { category: 'Cyclisme', points: cyclisme_points },
       ]);
 
-      // 3) Profile name
-      const { data: profRow, error: profErr } = await supabase
+      // 3) load profile name + style
+      const { data: profRow } = await supabase
         .from('profiles')
-        .select('first_name')
+        .select('first_name, profile_style')
         .eq('id', userId)
         .maybeSingle();
-      if (profErr) console.error('Erreur profile:', profErr.message);
-      setFirstName(profRow?.first_name ?? 'Utilisateur');
+      if (profRow) {
+        setFirstName(profRow.first_name || 'Utilisateur');
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setProfileStyle(profRow.profile_style as any || 'Aucune modification');
+      }
 
-      // 4) Pending achievements
-      const { data: pending, error: pendErr } = await supabase
+      // 4) pending & processed achievements
+      const { data: pending } = await supabase
         .from('achievements')
         .select('id, achievement, created_at')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
-      if (pendErr) console.error('Erreur pending achievements:', pendErr.message);
-
-      // 5) Processed achievements
-      const { data: processed, error: procErr } = await supabase
+      const { data: processed } = await supabase
         .from('user_achievements')
         .select('id, achievement, points, achieved_at, result')
         .eq('user_id', userId)
         .order('achieved_at', { ascending: false });
-      if (procErr) console.error('Erreur user_achievements:', procErr.message);
 
-      // 6) Combine and filter
-      const processedMap = new Set<string>();
-      if (processed) {
-        for (const v of processed) {
-          processedMap.add(v.achievement);
-        }
-      }
+      const processedSet = new Set(processed?.map(p => p.achievement));
       const list: Achievement[] = [];
 
-      // include only pending not yet processed
-      if (pending) {
-        for (const p of pending) {
-          if (!processedMap.has(p.achievement)) {
-            list.push({
-              id: p.id,
-              title: p.achievement,
-              points: 0,
-              achieved_at: p.created_at,
-              status: 'pending',
-            });
-          }
-        }
-      }
-
-      // add processed
-      if (processed) {
-        for (const v of processed) {
+      pending?.forEach(p => {
+        if (!processedSet.has(p.achievement)) {
           list.push({
-            id: v.id,
-            title: v.achievement,
-            points: v.points,
-            achieved_at: v.achieved_at,
-            status: v.result === 'accepted' ? 'accepted' : 'refused',
+            id: p.id,
+            title: p.achievement,
+            points: 0,
+            achieved_at: p.created_at,
+            status: 'pending',
           });
         }
-      }
-      setAchievements(list);
+      });
+      processed?.forEach(p => {
+        list.push({
+          id: p.id,
+          title: p.achievement,
+          points: p.points,
+          achieved_at: p.achieved_at,
+          status: p.result === 'accepted' ? 'accepted' : 'refused',
+        });
+      });
 
+      setAchievements(list);
       setLoading(false);
     })();
   }, [router]);
@@ -152,64 +171,83 @@ export default function ProfilePage() {
   }
 
   return (
-    <main className="bg-dusk min-h-screen py-12 px-4">
-      <div className="max-w-4xl mx-auto bg-bg-mid rounded-xl shadow-lg overflow-hidden">
+    <main className="bg-dusk min-h-screen py-8 px-6 xl:px-32 2xl:px-48">
+      <div className="w-full bg-bg-mid rounded-2xl shadow-xl overflow-hidden">
+
         {/* Header */}
-        <div className="relative bg-gradient-to-r from-purple-700 to-pink-600 p-8 flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-white">{firstName}</h1>
+        <div className="relative bg-gradient-to-r from-purple-700 to-pink-600 p-8 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center space-x-2">
+            <h1 className="text-4xl font-bold text-white">{firstName}</h1>
+            <span className="text-white/80">|</span>
+            <select
+              value={profileStyle}
+              onChange={handleStyleChange}
+              className="bg-white/20 text-white px-3 py-1 rounded-lg focus:outline-none"
+            >
+              <option value="Joueur">Joueur</option>
+              <option value="Sportif">Sportif</option>
+              <option value="Aucune modification">Aucune modification</option>
+            </select>
+          </div>
           <button
             onClick={handleLogout}
-            className="bg-opacity-20 text-white px-4 py-2 rounded-lg hover:bg-opacity-30 transition"
+            className="bg-white/20 text-white px-5 py-2 rounded-lg hover:bg-white/30 transition"
           >
             Déconnexion
           </button>
         </div>
 
-        {/* Scores */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-bg-mid p-6">
-          <div className="text-center">
-            <p className="text-sm text-white/70">Total des points</p>
-            <p className="text-2xl font-extrabold text-white">{totalPoints}</p>
+        {/* Totaux */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 bg-bg-mid p-8 text-center">
+          <div>
+            <p className="text-sm text-purple-400/70">Total</p>
+            <p className="text-5xl font-extrabold text-white">{totalPoints}</p>
           </div>
-          <div className="text-center space-y-1">
-            <p className="text-sm text-white/70">Sous-total eSport</p>
-            <p className="text-xl font-bold text-white">{subTotalEsport}</p>
-            <p className="text-sm text-white/70 mt-2">Sous-total Sport</p>
-            <p className="text-xl font-bold text-white">{subTotalSport}</p>
+          <div>
+            <p className="text-sm text-white/70">eSport</p>
+            <p className="text-2xl font-bold text-white">{subTotalEsport}</p>
           </div>
-          <div className="text-center space-y-1">
-            <p className="text-sm text-white/70">Sous-total Réalisations</p>
-            <p className="text-xl font-bold text-white">{subTotalAchievements}</p>
+          <div>
+            <p className="text-sm text-white/70">Sport</p>
+            <p className="text-2xl font-bold text-white">{subTotalSport}</p>
+          </div>
+          <div>
+            <p className="text-sm text-white/70">Événements</p>
+            <p className="text-2xl font-bold text-white">{subTotalEvents}</p>
+          </div>
+          <div>
+            <p className="text-sm text-white/70">Réalisations</p>
+            <p className="text-2xl font-bold text-white">{subTotalAchievements}</p>
           </div>
         </div>
 
         {/* Breakdown */}
-        <section className="bg-bg-light p-6 space-y-4">
-          <h2 className="text-xl font-semibold text-white mb-2">Points par catégorie</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
+        <section className="bg-bg-light p-8 space-y-4">
+          <h2 className="text-2xl font-semibold text-white">Points par catégorie</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-6 gap-6">
             {breakdown.map(item => (
               <div
                 key={item.category}
-                className="p-4 bg-bg-mid rounded-lg text-white text-center"
+                className="p-6 bg-bg-mid rounded-xl text-white text-center"
               >
                 <p className="font-medium">{item.category}</p>
-                <p className="mt-1 text-lg font-bold">{item.points} pts</p>
+                <p className="mt-2 text-2xl font-bold">{item.points} pts</p>
               </div>
             ))}
           </div>
         </section>
 
         {/* Achievements */}
-        <section className="bg-bg-mid p-6 space-y-4">
-          <h2 className="text-xl font-semibold text-white mb-2">Réalisations</h2>
+        <section className="bg-bg-mid p-8 space-y-4">
+          <h2 className="text-2xl font-semibold text-white">Réalisations</h2>
           {achievements.length === 0 ? (
             <p className="text-white/70">Aucune réalisation.</p>
           ) : (
-            <ul className="space-y-3">
+            <ul className="space-y-4">
               {achievements.map(a => (
                 <li
-                  key={`${a.status}-${a.id}`}  
-                  className="flex justify-between p-4 bg-bg-light rounded-lg"
+                  key={`${a.status}-${a.id}`}
+                  className="flex justify-between items-center p-4 bg-bg-light rounded-xl"
                 >
                   <div>
                     <p
@@ -221,7 +259,7 @@ export default function ProfilePage() {
                           : 'text-red-300'
                       }
                     >
-                      {a.title} {' '}
+                      {a.title}{' '}
                       {a.status === 'pending'
                         ? '(en attente)'
                         : a.status === 'accepted'
@@ -229,7 +267,8 @@ export default function ProfilePage() {
                         : '(refusé)'}
                     </p>
                     <p className="text-sm text-white/70">
-                      le {new Date(a.achieved_at).toLocaleDateString('fr-FR')}
+                      le{' '}
+                      {new Date(a.achieved_at).toLocaleDateString('fr-FR')}
                     </p>
                   </div>
                   <span
@@ -251,6 +290,16 @@ export default function ProfilePage() {
               ))}
             </ul>
           )}
+        </section>
+
+        {/* Avantages spéciaux */}
+        <section className="bg-bg-light p-8">
+          <h2 className="text-2xl font-semibold text-white mb-4">
+            Avantages spéciaux
+          </h2>
+          <p className="text-white/70">
+            Ici vous pourrez voir et gérer vos perks, bonus et promotions spéciales.
+          </p>
         </section>
       </div>
     </main>

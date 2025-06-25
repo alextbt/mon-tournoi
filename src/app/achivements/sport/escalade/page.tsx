@@ -34,7 +34,8 @@ export default function EscaladePage() {
   // Nouveaux états pour enregistrement de voie
   const [voiePoints, setVoiePoints] = useState<number>(0);
   const [firstName, setFirstName] = useState<string>('');
-  const [difficultySel, setDifficultySel] = useState<string>('General');
+  // On initialise maintenant sur TresFacile (correspond au premier <option> du <select>)
+  const [difficultySel, setDifficultySel] = useState<string>('TresFacile');
   // Initialiser vides plutôt que 1
   const [attempts, setAttempts] = useState<string>('');
   const [climbsCount, setClimbsCount] = useState<string>('');
@@ -103,8 +104,8 @@ export default function EscaladePage() {
     // Convertir les champs vides
     const attNum = Number(attempts) || 0;
     const climbsNum = Number(climbsCount) || 0;
-    const base: Record<string, number> = { General: 0, TresFacile: 0.5, Facile: 1.25, Normal: 2.25, Difficile: 9, TresDifficile: 15, Expert: 75 };
-    const bonusArr = [0, 3, 2.25, 1.25, 0.75, 0.25, 0.1];
+    const base: Record<string, number> = { TresFacile: 0.5, Facile: 1.25, Normal: 2.50, Difficile: 12, TresDifficile: 20, Expert: 75 };
+    const bonusArr = [3, 2.25, 1.50, 0.75, 0.25, 0.1];
     const bonus = bonusArr[attNum] || 0;
     const pts = (base[difficultySel] || 0) * (1 + bonus) * climbsNum;
     setSessionPoints(pts);
@@ -151,7 +152,23 @@ export default function EscaladePage() {
                 <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)} className="w-full p-2 rounded bg-gray-800 text-white" />
               </div>
               <div>
-                <label className="block mb-1">Difficulté</label>
+                <label className="block mb-1"><span>Difficulté</span>
+                  <button
+                    type="button"
+                    onClick={() => window.alert(
+                      'Points par voie effectuée en fonction de la difficulté :\n' +
+                      'Très facile (jaune) = 0.5 points\n' +
+                      'Facile (verte) = 1.25 points\n' +
+                      'Normal (bleue) = 2.5 points\n' +
+                      'Difficile (rouge) = 12 points\n' +
+                      'Très difficile (noire) = 20 points\n' +
+                      'Expert (violette) = 75 points'
+                    )}
+                    className="ml-2 p-2 border border-white text-white rounded-full hover:bg-white/10 transition"
+                  >
+                    i
+                  </button>
+                  </label>
                 <select value={difficultySel} onChange={e => setDifficultySel(e.target.value)} className="w-full p-2 rounded bg-gray-800 text-white">
                   <option value="TresFacile">Très facile (voie jaune - 4/4+)</option>
                   <option value="Facile">Facile (voie verte - 5a/b/c)</option>
@@ -162,7 +179,24 @@ export default function EscaladePage() {
                 </select>
               </div>
               <div>
-                <label className="block mb-1">Nombre d&apos;essais</label>
+                <label className="block mb-1"><span>Nombre d&apos;essais</span>
+                  <button
+                    type="button"
+                    onClick={() => window.alert(
+                      'Bonus en fonction du nombre d\'essais :\n' +
+                      '1er coup = +300%\n' +
+                      '2e coup = +225%\n' +
+                      '3e coup = +150%\n' +
+                      '4e coup = +75%\n' +
+                      '5e coup = +25%\n' +
+                      '6e coup = +10%\n' +
+                      'Au-delà, pas de bonus.'
+                    )}
+                    className="ml-2 p-2 border border-white text-white rounded-full hover:bg-white/10 transition"
+                  >
+                    i
+                  </button>
+                </label>
                 <input type="number" min={1} value={attempts} onChange={e => setAttempts(e.target.value)} className="w-full p-2 rounded bg-gray-800 text-white" placeholder="" />
               </div>
               <div>

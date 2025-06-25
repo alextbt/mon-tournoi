@@ -19,11 +19,13 @@ const events: Record<string, string> = {
   '2025-06-21': 'Ajout de l’onglet TFT sur le jeu League of Legends.',
   '2025-06-22': 'Sortie de la version 1.2 : Ajout dans la catégorie eSport des Échecs et dans la catégorie Sport du Cyclisme. Ajout des événements limités (un nouvel événement est déjà disponible !). Ajout de nouveaux succès pour toutes les catégories.',
   '2025-06-23': 'Modifications et ajout de succès pour les catégories LOL et VALORANT. Ajout des onglets TFT, ARAM, BRAWL et ARENA pour LOL. Rééquilibrage des points pour TOUTES les catégories : beaucoup de catégories verront leur succès ou réalisations réduites. Une baisse de plus de 20% des points dans toutes les catégories est à prévoir.', 
-  '2025-06-24': 'Ajout de la catégorie Overwatch 2.',
+  '2025-06-24': 'Correction des bugs de classement, profil (réalisations spéciales). Ajout d’une colonne "Événements" sur le classement. Justification des points Escalade.',
   '2025-06-25': 'Modification de l’interface du profil pour inclure les événements en cours ainsi que leurs points. Ajout de la catégorie événement dans le classement.',
   '2025-06-26': 'Début de l’événement « Hadès ».',
+  '2025-06-27': 'Correction de la page Cyclisme.',
   '2025-06-28': 'Ajout de la possibilité de lier son compte Chess.com avec son profil.',
   '2025-06-29': 'Début de l’événement « Sanctuaire ».',
+  '2025-06-30': 'Modification de la page Musculation : retrait de la partie sur la course. Ajout d’une nouvelle catégorie Course dans le Sport. Elle contiendra également la marche et exercices de course spéciaux.',
   '2025-07-07': 'Fin de l’événement « Un grand pas pour l’humanité ! ».',
   '2025-07-13': 'Ajout d’une nouvelle source dans le Sanctuaire.',
   '2025-07-17': 'Fin de l’événement « Hadès ».',
@@ -85,16 +87,24 @@ const events: Record<string, string> = {
           <div className="text-white space-y-6">
             <h2 className="text-2xl font-semibold">Version actuelle</h2>
             <p>
-              v1.2 – Sortie de la version 1.2.
+              v1.2.1 – Mercredi 25 juin
             </p>
             <p>
-              Ajout dans la catégorie eSport des Échecs et dans la catégorie Sport du Cyclisme. Ajout des événements limités (un nouvel événement est déjà disponible !). Ajout de nouveaux succès pour
-               toutes les catégories. Ajout des onglets TFT, ARAM, BRAWL et ARENA sur la page LOL. Modifications et ajout de succès pour les catégories LOL et VALORANT. 
-               Rééquilibrage des points pour TOUTES les catégories : beaucoup de catégories verront leur succès ou réalisations réduites. Une baisse des points pour tous les joueurs a eu lieu. 
+              Correction des bugs de classement, profil (réalisations spéciales). Ajout d’une colonne &quot;Événements&quot; sur le classement. Justification des points Escalade. Modification de l’interface 
+              du profil pour inclure les événements en cours ainsi que leurs points. Ajout de la catégorie événement dans le classement. 
             </p>
-
             <h3 className="text-xl font-semibold">Anciennes mises à jour</h3>
             <div className="space-y-2">
+              <details className="bg-white/10 p-4 rounded-lg">
+                <summary className="cursor-pointer font-medium">
+                  v1.2 – Mise à jour du lundi 23 juin.
+                </summary>
+                <p className="mt-2 text-white/80">
+                  Ajout dans la catégorie eSport des Échecs et dans la catégorie Sport du Cyclisme. Ajout des événements limités (un nouvel événement est déjà disponible !). Ajout de nouveaux succès pour
+               toutes les catégories. Ajout des onglets TFT, ARAM, BRAWL et ARENA sur la page LOL. Modifications et ajout de succès pour les catégories LOL et VALORANT. 
+               Rééquilibrage des points pour TOUTES les catégories : beaucoup de catégories verront leur succès ou réalisations réduites. Une baisse des points pour tous les joueurs a eu lieu.
+                </p>
+              </details>
               <details className="bg-white/10 p-4 rounded-lg">
                 <summary className="cursor-pointer font-medium">
                   v1.1 – Mise à jour du jeudi 19 juin.

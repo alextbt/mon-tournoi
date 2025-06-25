@@ -11,6 +11,7 @@ type LeaderboardEntry = {
   profile_style: 'Joueur' | 'Sportif' | 'Aucune';
   esport: number;
   sport: number;
+  events: number;
   total: number;
   modifiedTotal: number | null;
   movement: 'up' | 'down' | null;
@@ -41,11 +42,11 @@ export default function ScoresPage() {
 
         const ids = profs.map(p => p.id);
 
-        // 2. Récupérer les points correspondants
-        const { data: ptsData, error: ptsErr } = await supabase
+        // 2. Récupérer les points correspondants        
+          const { data: ptsData, error: ptsErr } = await supabase
           .from('user_points')
           .select(
-            'user_id, lol_points, valorant_points, escalade_points, escalade_voie_points, musculation_points'
+            'user_id, lol_points, valorant_points, escalade_points, escalade_voie_points, musculation_points, event_points'
           )
           .in('user_id', ids);
         if (ptsErr || !ptsData) throw ptsErr;
@@ -62,7 +63,8 @@ export default function ScoresPage() {
             (r.escalade_points ?? 0) +
             (r.escalade_voie_points ?? 0) +
             (r.musculation_points ?? 0);
-          const total = esport + sport;
+          const events = (r.event_points ?? 0);
+          const total = esport + sport + events;
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const modifiedTotal = computeModified(p.profile_style as any, esport, sport);
           return {
@@ -72,6 +74,7 @@ export default function ScoresPage() {
             profile_style: p.profile_style as any || 'Aucune',
             esport,
             sport,
+            events,
             total,
             modifiedTotal,
             movement: null,
@@ -125,6 +128,7 @@ export default function ScoresPage() {
                 <th className="px-4 py-3 text-center">Style</th>
                 <th className="px-4 py-3 text-right">eSport</th>
                 <th className="px-4 py-3 text-right">Sport</th>
+                <th className="px-4 py-3 text-right">Événements</th>
                 <th className="px-4 py-3 text-right">Total</th>
                 <th className="px-4 py-3 text-right">Total modifié</th>
               </tr>
@@ -137,6 +141,7 @@ export default function ScoresPage() {
                   <td className="px-4 py-2 text-center">{e.profile_style}</td>
                   <td className="px-4 py-2 text-right">{e.esport}</td>
                   <td className="px-4 py-2 text-right">{e.sport}</td>
+                  <td className="px-4 py-2 text-right">{e.events}</td>
                   <td className="px-4 py-2 text-right font-bold">{e.total}</td>
                   <td className="px-4 py-2 text-right font-semibold">
                     {e.modifiedTotal == null ? '—' : (
