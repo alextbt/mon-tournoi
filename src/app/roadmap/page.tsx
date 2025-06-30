@@ -21,15 +21,19 @@ const events: Record<string, string> = {
   '2025-06-23': 'Modifications et ajout de succès pour les catégories LOL et VALORANT. Ajout des onglets TFT, ARAM, BRAWL et ARENA pour LOL. Rééquilibrage des points pour TOUTES les catégories : beaucoup de catégories verront leur succès ou réalisations réduites. Une baisse de plus de 20% des points dans toutes les catégories est à prévoir.', 
   '2025-06-24': 'Correction des bugs de classement, profil (réalisations spéciales). Ajout d’une colonne "Événements" sur le classement. Justification des points Escalade.',
   '2025-06-25': 'Modification de l’interface du profil pour inclure les événements en cours ainsi que leurs points. Ajout de la catégorie événement dans le classement.',
-  '2025-06-26': 'Début de l’événement « Hadès ».',
   '2025-06-27': 'Correction de la page Cyclisme.',
   '2025-06-28': 'Ajout de la possibilité de lier son compte Chess.com avec son profil.',
-  '2025-06-29': 'Début de l’événement « Sanctuaire ».',
-  '2025-06-30': 'Modification de la page Musculation : retrait de la partie sur la course. Ajout d’une nouvelle catégorie Course dans le Sport. Elle contiendra également la marche et exercices de course spéciaux.',
-  '2025-07-07': 'Fin de l’événement « Un grand pas pour l’humanité ! ».',
+  '2025-07-01': 'Modification de la page Musculation : retrait de la partie sur la course. Ajout d’une nouvelle catégorie Course dans le Sport. Elle contiendra également la marche et exercices de course spéciaux. Création d’une nouvelle page « Réalisations spéciales » (actuellement sur la page musculation).',
+  '2025-07-02': 'Début de l’événement « Sanctuaire ».',
+  '2025-07-03': 'Début de l’événement « Hadès ».',
+  '2025-07-04': 'Correction et actualisation de la page Classement. Ajout de la colonne « Réalisations ».',
+  '2025-07-05': 'Précision du gain de points dans les catégories de cyclisme et d’échecs. Réduction des points obtenus à travers la réalisation de voies normales, difficiles et très difficiles pour l’escalade. Refonte de la page des règles.',
+  '2025-07-07': 'Fin de l’événement « Un grand pas pour l’humanité ! ». Début des événements « Spear of Justice » et « Megalovania ».',
   '2025-07-13': 'Ajout d’une nouvelle source dans le Sanctuaire.',
-  '2025-07-17': 'Fin de l’événement « Hadès ».',
+  '2025-07-17': 'Fin de l’événement « Spear of Justice ».',
+  '2025-07-24': 'Fin de l’événement « Hadès ».',
   '2025-07-27': 'Fin de l’événement « Sanctuaire ».',
+  '2025-07-28': 'Fin de l’événement « Megalovania ».',
 };
 
   // 2) Génère toutes les dates entre deux bornes incluses
@@ -87,14 +91,25 @@ const events: Record<string, string> = {
           <div className="text-white space-y-6">
             <h2 className="text-2xl font-semibold">Version actuelle</h2>
             <p>
-              v1.2.1 – Mercredi 25 juin
+              v1.2.2 – Mise à jour du lundi 30 juin
             </p>
             <p>
-              Correction des bugs de classement, profil (réalisations spéciales). Ajout d’une colonne &quot;Événements&quot; sur le classement. Justification des points Escalade. Modification de l’interface 
-              du profil pour inclure les événements en cours ainsi que leurs points. Ajout de la catégorie événement dans le classement. 
+              Décalage de la Roadmap : les mises à jour des derniers jours n’ont pas eu lieu à cause de problèmes plus urgents à gérer dans la base de donnée. Veuillez m’excuser ! 
+              En attendant la v1.3 qui arrive lundi prochain, la Roadmap a été mise à jour pour la semaine à venir avec les éléments prévus. De plus voici les modifications apportées : 
+              Correction de la page cyclisme. Ajout de la liaison du profil chess.com avec le tournoi, permettant de gagner des points. Mise à jour du profil afin de comptabiliser les points de la catégorie
+              des échecs et du cyclisme. Actualisation des points d’événement.  
             </p>
             <h3 className="text-xl font-semibold">Anciennes mises à jour</h3>
             <div className="space-y-2">
+              <details className="bg-white/10 p-4 rounded-lg">
+                <summary className="cursor-pointer font-medium">
+                  v1.2.1 – Mise à jour du mercredi 25 juin.
+                </summary>
+                <p className="mt-2 text-white/80">
+                  Correction des bugs de classement, profil (réalisations spéciales). Ajout d’une colonne &quot;Événements&quot; sur le classement. Justification des points Escalade. Modification de l’interface 
+              du profil pour inclure les événements en cours ainsi que leurs points. Ajout de la catégorie événement dans le classement. 
+                </p>
+              </details>
               <details className="bg-white/10 p-4 rounded-lg">
                 <summary className="cursor-pointer font-medium">
                   v1.2 – Mise à jour du lundi 23 juin.

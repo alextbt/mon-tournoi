@@ -2,6 +2,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import PageLayout from '@/components/PageLayout';
+import { supabase } from '@/lib/supabaseClient';
 
 interface Profile {
   username: string;
@@ -168,6 +169,36 @@ export default function ChessPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false)
 
+async function handleSaveProfile() {
+  // 1) Récupérer la session
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) {
+    console.error('Session error:', sessionError);
+    alert('Erreur de session, veuillez vous reconnecter.');
+    return;
+  }
+  if (!session) {
+    alert('Vous devez être connecté pour enregistrer votre profil.');
+    return;
+  }
+  if (!profile) return;
+  const userId = session.user.id;
+
+  // 2) Upsert dans chess_profiles
+  const { error } = await supabase
+    .from('chess_profiles')
+    .upsert(
+      { user_id: userId, chess_username: profile.username },
+      { onConflict: 'user_id' }
+    );
+  if (error) {
+    console.error('Erreur sauvegarde profil:', error);
+    alert('Impossible de sauvegarder le profil.');
+  } else {
+    alert('Profil enregistré avec succès !');
+  }
+}
+
   // fetch de base : profil et stats
   async function fetchProfile(user: string): Promise<Profile> {
     const res = await fetch(`https://api.chess.com/pub/player/${user}`);
@@ -258,10 +289,9 @@ export default function ChessPage() {
  return (
     <PageLayout title="Échecs - Succès et réalisations">
       <h1 className="text-red-500 text-lg font-semibold text-text text-center mb-6">
-        Vous pouvez voir le nombre de points obtenus sur votre profil en le recherchant. Notez que vous pourrez lier plus tard votre profil Chess.com avec votre profil du tournoi. Plus de détails sur la 
-        page Roadmap. Merci de votre patience. 
+        Enregistrez votre profil pour lier votre compte du tournoi avec votre compte Chess.com. Les points sur votre profil de tournoi sont actualisés tous les mardis et vendredis soirs.
       </h1>
-      <div className="w-full max-w-3xl mx-auto p-4 space-y-6">
+      <div className="w-full max-w-full mx-auto p-4 space-y-6">
         {/* Recherche */}
         <div className="flex flex-col sm:flex-row items-center sm:space-x-4 space-y-4 sm:space-y-0">
           <input
@@ -277,6 +307,13 @@ export default function ChessPage() {
             className="px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary-dark transition w-full sm:w-auto"
           >
             {loading ? 'Chargement...' : 'Afficher profil'}
+                    </button>
+          <button
+            onClick={handleSaveProfile}
+            disabled={!profile}
+            className="px-6 py-3 bg-pink-500 text-white font-bold rounded-lg hover:bg-pink-600 transition w-full sm:w-auto"
+          >
+            Enregistrer ce profil comme mon profil
           </button>
         </div>
         {error && <p className="text-error font-medium text-center">{error}</p>}
