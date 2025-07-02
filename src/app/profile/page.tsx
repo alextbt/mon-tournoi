@@ -189,6 +189,7 @@ export default function ProfilePage() {
               <option value="Éthéré">Éthéré (si débloqué dans l’événement Sanctuaire)</option>
               <option value="Festif">Festif (si débloqué dans l’événement Sanctuaire)</option>
               <option value="Divin">Divin (si débloqué dans l’événement Sanctuaire)</option>
+              <option value="Aucune modification">Aucune modification</option>
             </select>
           </div>
           <button
