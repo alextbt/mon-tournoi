@@ -23,7 +23,7 @@ export default function EventsPage() {
               Un grand pas pour l&apos;humanité !
             </Link>
             <p className="text-md text-green-600">Marchez et gagnez des points !</p>
-            <p className="text-md text-green-700">Événement disponible jusqu&apos;au <strong>7 juillet !</strong></p>
+            <p className="text-md text-green-700">Événement disponible jusqu&apos;au <strong>8 juillet !</strong></p>
           </div>
           {/* Néon infernal, rouge et noir */}
           <div className="flex flex-col items-center space-y-2">
@@ -34,18 +34,18 @@ export default function EventsPage() {
               Bienvenue dans les Enfers
             </Link>
             <p className="text-md text-red-600">Remontez les Enfers et gagnez des points dans Hadès !</p>
-            <p className="text-md text-red-700">Événement disponible à partir du <strong>26 juin !</strong></p>
+            <p className="text-md text-red-700">Événement disponible à partir du <strong>3 juillet !</strong></p>
           </div>
           {/* Néon mystique, bleuté */}
           <div className="flex flex-col items-center space-y-2">
             <Link
-              href="/achivements/events/sanctuarytempo"
+              href="/achivements/events/sanctuary"
               className="inline-flex items-center justify-center w-56 h-48 rounded-xl bg-blue-700 text-white font-semibold text-xl transition shadow-[0_0_20px_rgba(59,130,246,0.9)] hover:shadow-[0_0_40px_rgba(59,130,246,1)]"
             >
               Le Sanctuaire
             </Link>
             <p className="text-md text-blue-600">Effectuez des défis spéciaux quotidiens et venez tentez votre chance au Sanctuaire !</p>
-            <p className="text-md text-blue-700">Événement disponible à partir du <strong>29 juin !</strong></p>
+            <p className="text-md text-blue-700">Événement disponible jusqu&apos;au <strong>30 juillet !</strong></p>
           </div>
         </div>
       </div>

@@ -1,4 +1,3 @@
-// src/app/achivements/events/sanctuary/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,7 +5,6 @@ import { supabase } from '@/lib/supabaseClient';
 import Link from 'next/link';
 
 // Types
-
 type Source = { id: number; name: string; cost: number; attempts: number };
 type Challenge = { id: number; description: string; points: number; frequency: 'daily' | 'weekly'; done: boolean };
 type Reward = { id: number; name: string; description: string; rarity_weight: number };
@@ -14,13 +12,15 @@ type InventoryItem = { id: number; name: string; description: string; obtained_a
 
 export default function SanctuaryEventPage() {
   const [destinyPoints, setDestinyPoints] = useState<number>(0);
+  const [eventPoints, setEventPoints] = useState<number>(0);
+  const [profileStyle, setProfileStyle] = useState<string>('');
   const [sources, setSources] = useState<Source[]>([]);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [rewardsMap, setRewardsMap] = useState<Record<number, Reward[]>>({});
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Weighted random pick helper
+  // Helper: tirage pondéré
   const weightedPick = <T extends { rarity_weight: number }>(items: T[]): T => {
     const total = items.reduce((sum, i) => sum + i.rarity_weight, 0);
     let r = Math.random() * total;
@@ -31,23 +31,33 @@ export default function SanctuaryEventPage() {
     return items[items.length - 1];
   };
 
-  // src/app/achivements/events/sanctuary/page.tsx (avant le return)
-
+  // Chargement initial : points, sources, défis, inventaire et style
   useEffect(() => {
     (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session }
+      } = await supabase.auth.getSession();
       if (!session) return;
       const userId = session.user.id;
 
-      // 1) Load user's destiny points
+      // 1) Points de destinée et points totaux
       const { data: up } = await supabase
         .from('user_points')
-        .select('destiny_points')
+        .select('destiny_points,event_points')
         .eq('user_id', userId)
         .maybeSingle();
       setDestinyPoints(up?.destiny_points ?? 0);
+      setEventPoints(up?.event_points ?? 0);
 
-      // 2) Load sources and attempt counts
+      // 2) Style de profil
+      const { data: pr } = await supabase
+        .from('profiles')
+        .select('profile_style')
+        .eq('user_id', userId)
+        .maybeSingle();
+      setProfileStyle(pr?.profile_style ?? '');
+
+      // 3) Sources d'invocation
       const { data: src } = await supabase
         .from('sanctuary_sources')
         .select('id,name,cost');
@@ -60,10 +70,10 @@ export default function SanctuaryEventPage() {
         id: s.id,
         name: s.name,
         cost: s.cost,
-        attempts: attemptMap[s.id] ?? 0
+        attempts: attemptMap[s.id] ?? 0,
       })));
 
-      // 3) Load challenges and statuses
+      // 4) Défis et statuts
       const { data: ch } = await supabase
         .from('sanctuary_challenges')
         .select('id,description,points,frequency');
@@ -80,7 +90,7 @@ export default function SanctuaryEventPage() {
         done: statusMap[c.id] === 'accepted'
       })));
 
-      // 4) Preload rewards per source
+      // 5) Récompenses par source
       const promises = (src ?? []).map(async s => {
         const { data: rw } = await supabase
           .from('sanctuary_rewards')
@@ -91,7 +101,7 @@ export default function SanctuaryEventPage() {
       const entries = await Promise.all(promises);
       setRewardsMap(Object.fromEntries(entries));
 
-      // 5) Load full inventory
+      // 6) Inventaire complet
       const { data: inv } = await supabase
         .from('user_sanctuary_rewards')
         .select('id,obtained_at,sanctuary_rewards(name,description)')
@@ -101,7 +111,7 @@ export default function SanctuaryEventPage() {
         id: r.id,
         name: r.sanctuary_rewards.name,
         description: r.sanctuary_rewards.description,
-        obtained_at: r.obtained_at
+        obtained_at: r.obtained_at,
       })));
 
       setLoading(false);
@@ -196,6 +206,198 @@ export default function SanctuaryEventPage() {
         { user_id: userId, destiny_points: updated },
         { onConflict: 'user_id' }
       );
+  };  
+  
+   // Consommation d'un item de l'inventaire
+  const consumeItem = async (item: InventoryItem) => {
+    const { id, name } = item;
+    const {
+      data: { session }
+    } = await supabase.auth.getSession();
+    if (!session) return;
+    const userId = session.user.id;
+
+    // 1) Supprimer l'item de la table
+    await supabase
+      .from('user_sanctuary_rewards')
+      .delete()
+      .eq('id', id);
+
+    // 2) Mettre à jour l'inventaire local
+    setInventory(curr => curr.filter(i => i.id !== id));
+
+    // 3) Déclencher l'effet
+if (name === 'Eau gazeuse') {
+  // Calcule la nouvelle valeur
+  const updated = destinyPoints + 100;
+
+  // Persiste dans la colonne `destiny_points`
+  await supabase
+    .from('user_points')
+    .upsert(
+      { user_id: userId, destiny_points: updated },
+      { onConflict: 'user_id' }
+    );
+
+  // Met à jour le state local
+  setDestinyPoints(updated);
+}
+else if (name === 'Donut') {
+  // Calcule la nouvelle valeur
+  const updated = eventPoints + 10;
+
+  // Persiste dans la colonne `event_points`
+  await supabase
+    .from('user_points')
+    .upsert(
+      { user_id: userId, event_points: updated },
+      { onConflict: 'user_id' }
+    );
+
+  // Met à jour le state local
+  setEventPoints(updated);
+}
+else if (name === 'Eau plate') {
+  // Calcule la nouvelle valeur
+  const updated = destinyPoints + 200;
+
+  // Persiste dans la colonne `destiny_points`
+  await supabase
+    .from('user_points')
+    .upsert(
+      { user_id: userId, destiny_points: updated },
+      { onConflict: 'user_id' }
+    );
+
+  // Met à jour le state local
+  setDestinyPoints(updated);
+}
+  else if (name === 'Donut sucré') {
+  // Calcule la nouvelle valeur
+  const updated = eventPoints + 20;
+
+  // Persiste dans la colonne `event_points`
+  await supabase
+    .from('user_points')
+    .upsert(
+      { user_id: userId, event_points: updated },
+      { onConflict: 'user_id' }
+    );
+
+  // Met à jour le state local
+  setEventPoints(updated);
+}
+    else if (name === 'Masque du Sanctuaire') {
+  // 1) détermine le nouveau style (toggle)
+  const newStyle = profileStyle === 'Éthéré' ? '' : 'Éthéré';
+
+  // 2) persiste en base dans profiles.profile_style
+  await supabase
+    .from('profiles')
+    .update({ profile_style: newStyle })
+    .eq('user_id', userId);
+
+  // 3) mets à jour le state local pour ré-render
+  setProfileStyle(newStyle);
+}
+    else if (name === 'Donut sucré au sucre') {
+  // Calcule la nouvelle valeur
+  const updated = eventPoints + 50;
+
+  // Persiste dans la colonne `event_points`
+  await supabase
+    .from('user_points')
+    .upsert(
+      { user_id: userId, event_points: updated },
+      { onConflict: 'user_id' }
+    );
+
+  // Met à jour le state local
+  setEventPoints(updated);
+}
+    else if (name === 'Eau sacrée') {
+  // Calcule la nouvelle valeur
+  const updated = destinyPoints + 160;
+
+  // Persiste dans la colonne `destiny_points`
+  await supabase
+    .from('user_points')
+    .upsert(
+      { user_id: userId, destiny_points: updated },
+      { onConflict: 'user_id' }
+    );
+
+  // Met à jour le state local
+  setDestinyPoints(updated);
+}
+    else if (name === 'Feu d’artifice') {
+  // 1) détermine le nouveau style (toggle)
+  const newStyle = profileStyle === 'Festif' ? '' : 'Festif';
+
+  // 2) persiste en base dans profiles.profile_style
+  await supabase
+    .from('profiles')
+    .update({ profile_style: newStyle })
+    .eq('user_id', userId);
+
+  // 3) mets à jour le state local pour ré-render
+  setProfileStyle(newStyle);
+}
+
+else if (name === 'Donut béni') {
+  // Calcule la nouvelle valeur
+  const updated = eventPoints + 35;
+
+  // Persiste dans la colonne `event_points`
+  await supabase
+    .from('user_points')
+    .upsert(
+      { user_id: userId, event_points: updated },
+      { onConflict: 'user_id' }
+    );
+
+  // Met à jour le state local
+  setEventPoints(updated);
+}
+else if (name === 'Eau bénie') {
+  const updated = destinyPoints + 320;
+  await supabase
+    .from('user_points')
+    .upsert(
+      { user_id: userId, destiny_points: updated },
+      { onConflict: 'user_id' }
+    );
+  setDestinyPoints(updated);
+}
+    else if (name === 'Voeu') {
+  // 1) détermine le nouveau style (toggle)
+  const newStyle = profileStyle === 'Divin' ? '' : 'Divin';
+
+  // 2) persiste en base dans profiles.profile_style
+  await supabase
+    .from('profiles')
+    .update({ profile_style: newStyle })
+    .eq('user_id', userId);
+
+  // 3) mets à jour le state local pour ré-render
+  setProfileStyle(newStyle);
+}
+
+    else if (name === 'Pedro (RIP)') {
+  // Calcule la nouvelle valeur
+  const updated = eventPoints + 150;
+
+  // Persiste dans la colonne `event_points`
+  await supabase
+    .from('user_points')
+    .upsert(
+      { user_id: userId, event_points: updated },
+      { onConflict: 'user_id' }
+    );
+
+  // Met à jour le state local
+  setEventPoints(updated);
+}
   };
 
   if (loading) return <p className="text-center py-12 text-white">Chargement…</p>;
@@ -209,7 +411,7 @@ export default function SanctuaryEventPage() {
         <h1 className="text-5xl font-extrabold">Le Sanctuaire</h1>
         <p className="text-lg text-blue-300 px-6">
           Ici, vous pouvez invoquer la fortune et remporter des récompenses gratuites !<br/>
-          Chaque essai coûte des points de destinée, gagnés en relevant des défis journaliers et hebdomadaires.
+          Chaque essai coûte des points de destinée, gagnés en relevant des défis quotidiens et hebdomadaires.
         </p>
         <Link href="/achivements/events/sanctuary/pulls">
           <button className="inline-block mb-6 text-blue-200 border border-blue-400 rounded-full w-8 h-8 leading-8 hover:bg-blue-500 transition">
@@ -248,20 +450,29 @@ export default function SanctuaryEventPage() {
           </div>
         </section>
 
-        {/* Inventaire */}
-        <section className="bg-bg-mid p-4 rounded-lg">
-          <h2 className="font-semibold mb-2">Votre inventaire</h2>
-          <ul className="space-y-1">
-            {inventory.length === 0 ? (
-              <li className="text-sm text-white/70">Votre inventaire est vide.</li>
-            ) : (
-              inventory.map(item => (
-                <li key={item.id} className="text-sm">
-                  <strong className="text-indigo-300">{item.name}</strong> — {item.description}
-                </li>
-              ))
-            )}
-          </ul>
+        {/* Inventory enlarged and consumable */}
+        <section className="bg-bg-mid p-6 rounded-lg">
+          <h2 className="font-semibold mb-4 text-2xl">Votre inventaire</h2>
+          {inventory.length === 0 ? (
+            <p className="text-white/70">Votre inventaire est vide.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {inventory.map(item => (
+                <div key={item.id} className="p-4 bg-bg-light rounded-lg flex justify-between items-center">
+                  <div className="text-left">
+                    <p className="font-medium text-lg">{item.name}</p>
+                    <p className="text-sm text-white/70">{item.description}</p>
+                  </div>
+                  <button
+                    onClick={() => consumeItem(item)}
+                    className="ml-4 px-4 py-2 bg-green-500 hover:bg-green-400 text-white rounded-lg font-semibold transition"
+                  >
+                    Utiliser
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Défis */}
@@ -271,7 +482,7 @@ export default function SanctuaryEventPage() {
             {['daily','weekly'].map(freq => (
               <div key={freq}>
                 <h3 className="text-xl font-medium mb-4 capitalize text-center">
-                  {freq === 'daily' ? 'Défis journaliers' : 'Défis hebdomadaires'}
+                  {freq === 'daily' ? 'Défis quotidiens' : 'Défis hebdomadaires'}
                 </h3>
                 <ul className="space-y-3">
                   {challenges.filter(c => c.frequency === freq).map(c => (
@@ -291,6 +502,11 @@ export default function SanctuaryEventPage() {
                     </li>
                   ))}
                 </ul>
+                <Link href="/issues">
+        <button className="mt-3 bg-blue-400 hover:bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg transition neon-red">
+          Une idée de défi ?
+        </button>
+      </Link>
               </div>
             ))}
           </div>

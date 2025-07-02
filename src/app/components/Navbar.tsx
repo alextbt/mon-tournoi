@@ -81,15 +81,19 @@ export default function Navbar() {
                 <Link href="/achivements/sport/musculation" className="block px-4 py-1 hover:bg-bg-light text-cyan-100" onClick={() => setAchieveOpen(false)}>
                   Musculation
                 </Link>
-                <Link href="/achivements/sport/escalade" className="block px-4 py-1 hover:bg-bg-light text-fuchsia-800" onClick={() => setAchieveOpen(false)}>
+                <Link href="/achivements/sport/escalade" className="block px-4 py-1 hover:bg-bg-light text-fuchsia-700" onClick={() => setAchieveOpen(false)}>
                   Escalade
                 </Link>
-                <Link href="/achivements/sport/cyclisme" className="block px-4 py-1 hover:bg-bg-light text-stone-400" onClick={() => setAchieveOpen(false)}>
+                <Link href="/achivements/sport/cyclisme" className="block px-4 py-1 hover:bg-bg-light text-stone-300" onClick={() => setAchieveOpen(false)}>
                   Cyclisme
+                </Link>
+                <Link href="/achivements/sport/course" className="block px-4 py-1 hover:bg-bg-light text-emerald-600" onClick={() => setAchieveOpen(false)}>
+                  Course
                 </Link>
               </div>
             )}
           </div>
+          <Link href="/achivements/special" className="btn-nav text-sm">Réalisations spéciales</Link>
           <div className="relative" ref={eventsRef}>
             <button
               onClick={toggleEvents}
@@ -106,8 +110,14 @@ export default function Navbar() {
                 <Link href="/achivements/events/hades" className="block px-4 py-1 hover:bg-bg-light text-red-700" onClick={() => setEventsOpen(false)}>
                   Hadès
                 </Link>
-                <Link href="/achivements/events/sanctuarytempo" className="block px-4 py-1 hover:bg-bg-light text-blue-600" onClick={() => setEventsOpen(false)}>
+                <Link href="/achivements/events/sanctuary" className="block px-4 py-1 hover:bg-bg-light text-blue-600" onClick={() => setEventsOpen(false)}>
                   Le Sanctuaire
+                </Link>
+                <Link href="/achivements/events/spearofjustice" className="block px-4 py-1 hover:bg-bg-light text-green-500" onClick={() => setEventsOpen(false)}>
+                  Spear of Justice
+                </Link>
+                <Link href="/achivements/events/megalovania" className="block px-4 py-1 hover:bg-bg-light text-white" onClick={() => setEventsOpen(false)}>
+                  Megalovania
                 </Link>
               </div>
             )}
@@ -115,7 +125,6 @@ export default function Navbar() {
           <Link href="/rules" className="btn-nav text-sm">Règles</Link>
           <Link href="/roadmap" className="btn-nav text-sm">Roadmap</Link>
           <Link href="/issues" className="btn-nav text-sm">Aide</Link>
-          <Link href="https://discord.gg/mFwggMsqPx" className="btn-nav text-sm">Discord</Link>
         </nav>
       </div>
       <div className="flex items-center">
@@ -164,6 +173,12 @@ export default function Navbar() {
             </Link>
             <Link href="/achivements/sport/cyclisme" className="btn-nav text-sm block" onClick={handleNavClick}>
               Cyclisme
+            </Link>
+            <Link href="/achivements/sport/course" className="btn-nav text-sm block" onClick={handleNavClick}>
+              Course
+            </Link>
+            <Link href="/achivements/special" className="btn-nav text-sm block" onClick={handleNavClick}>
+              Réalisations spéciales
             </Link>
             <Link href="/achivements/events" className="btn-nav text-sm block" onClick={handleNavClick}>
               Events

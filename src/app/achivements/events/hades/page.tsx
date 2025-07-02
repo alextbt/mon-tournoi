@@ -18,7 +18,7 @@ export default function HadesEventPage() {
         {/* Sous-titre */}
         <p className="text-lg text-gray-200 max-w-2xl mx-auto">
           Cet événement est dédié au jeu vidéo <span className="font-semibold text-red-300">Hadès</span>. 
-          Il faut avoir le jeu pour participer. Voici les disponibilités du jeu :
+          Il faut avoir le jeu pour participer. Voici les disponibilités du jeu (<span className="font-semibold text-red-300">le jeu est actuellement en solde pour moins de 10€ !</span>):
         </p>
 
         {/* Boutons d’achats */}
@@ -84,7 +84,7 @@ export default function HadesEventPage() {
           Si vous n&apos;avez pas le jeu, que vous ne souhaitez pas l&apos;achetez, ou que vous ne disposez pas d&apos;un compte Netflix sur iOS, ce n&apos;est pas un problème. 
           Cet événement est facultatif au même titre que l&apos;est la catégorie eSport. Sinon, cliquez ici pour continuer.
         </p>
-        <Link href="/achivements/events/hades/game">
+        <Link href="/achivements/events/hadestempo">
   <button
     className="
       w-24 h-24      /* taille fixe pour ton bouton */

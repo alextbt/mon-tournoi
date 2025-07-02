@@ -169,7 +169,7 @@ export default function CyclismePage() {
             />
             <button
               type="submit"
-              className="w-full py-4 bg-green-600 hover:bg-green-700 rounded-lg font-semibold text-lg"
+              className="w-full py-4 bg-stone-600 hover:bg-stone-700 rounded-lg font-semibold text-lg"
             >
               Enregistrer ma performance
             </button>

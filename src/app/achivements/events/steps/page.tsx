@@ -203,7 +203,7 @@ export default function StepsEventPage() {
               Récompenses
             </h2>
             <h4 className="font-medium text-green-600 mb-2">Les points sont répartis entre les joueurs participants à hauteur de leur pourcentage de contribution de la barre générale. Ainsi, 
-                participer à hauteur de 50% de la barre vous donnera 50% de la récompense collective.
+                participer à hauteur de 50% de la barre vous donnera 50% de la récompense collective à la fin de l&apos;événement.
             </h4>
             <h3 className="font-medium text-green-800 mb-2">Collectives</h3>
             
