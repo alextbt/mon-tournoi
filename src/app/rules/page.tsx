@@ -13,33 +13,66 @@ export default function RulesPage() {
             Objectif du tournoi
           </h2>
           <p className="text-white/70">
-            Accumuler le plus de points dans les différentes catégories afin de devenir le champion du tournoi.
+            Accumuler le plus de points dans différentes catégories pour devenir champion tout en s’amusant.
           </p>
         </section>
 
         {/* Format */}
         <section>
           <h2 className="text-2xl font-semibold text-white mb-2 pl-3 border-l-4 border-accent-purple">
-            Format de la compétition
+            Format
           </h2>
           <p className="text-white/70">
-            Les joueurs participent individuellement au tournoi. Chacun choisit ses activités parmi les jeux et sports disponibles.
+            Compétition individuelle : choisissez librement vos activités parmi les jeux vidéo et sports proposés.
           </p>
         </section>
 
-        {/* Points */}
+        {/* Valeur des points */}
+        <section>
+          <h2 className="text-2xl font-semibold text-white mb-2 pl-3 border-l-4 border-accent-purple">
+            Valeur des points
+          </h2>
+          <p className="text-white/70">
+            Pour rester ludique et équitable, le barème récompense à la fois la durée et l’effort :
+          </p>
+          <ul className="list-disc list-inside text-white/70">
+            <li>
+              <strong>Durée</strong> : une session de 30 minutes rapporte presque autant que 30 minutes de jeu ou de sport.
+            </li>
+            <li>
+              <strong>Performance</strong> : vos résultats ajustent le total de points pour valoriser vos efforts.
+            </li>
+          </ul>
+        </section>
+
+        {/* Gagner des points */}
         <section>
           <h2 className="text-2xl font-semibold text-white mb-2 pl-3 border-l-4 border-accent-purple">
             Gagner des points
           </h2>
           <p className="text-white/70">
-            <strong>Réalisations</strong> : points pour la participation (ex. une partie jouée, une séance de sport).<br/>
-            <strong>Succès</strong> : défis spéciaux plus difficiles, rapportant davantage de points.<br/>
-            Notez que les succès et réalisations sont vérifiables à travers des sites comme Tracker.gg ou DPM.LOL. N&apos;hésitez pas à utiliser ces sites pour vérifier vos performances et réalisations 
-            eSport. Pour le Sport, il peut vous être demandé des preuves de l&apos;exercice effectué, surtout si ce dernier rapporte beaucoup de points. La preuve est admise par tous moyens (relevé 
-            électronique, témoin, vidéo...). Votre bonne foi est présumée, mais sachez que des contrôles et vérifications de la progression de chacun des joueurs a lieu très souvent. Pour que la compétition 
-            soit la plus saine possible, soyez vigilants sur ce que vous validez.
+            <strong>Réalisations</strong> : sessions de jeu ou de sport (ex. une partie jouée, une séance de sport).
+            <br />
+            <strong>Succès</strong> : défis spéciaux à plus forte valeur.
           </p>
+          <p className="text-white/70">
+            Vérifiez vos performances via Tracker.gg ou DPM.LOL pour l’eSport. Pour le sport, une preuve (capture, vidéo, témoin) peut être demandée en cas de gros gains de points.
+          </p>
+        </section>
+
+        {/* Événements */}
+        <section>
+          <h2 className="text-2xl font-semibold text-white mb-2 pl-3 border-l-4 border-accent-purple">
+            Événements
+          </h2>
+          <p className="text-white/70">
+            Les événements sont des challenges temporaires (environ deux semaines chacun) qui chamboulent le barème régulier :
+          </p>
+          <ul className="list-disc list-inside text-white/70">
+            <li>Ils offrent des points bonus pour tester de nouvelles activités.</li>
+            <li>Ils ne permettent pas à un participant en bas du classement de passer directement en tête.</li>
+            <li>Restez informé·e des prochains événements pour maximiser vos gains.</li>
+          </ul>
         </section>
 
         {/* Classements */}
@@ -48,17 +81,29 @@ export default function RulesPage() {
             Classements
           </h2>
           <p className="text-white/70">
-            Un classement individuel est mis à jour en temps réel pour suivre votre progression et comparer vos points avec les autres participants.
+            Un classement individuel mis à jour en temps réel pour suivre votre progression et vous comparer aux autres.
           </p>
         </section>
 
-        {/* Réclamations */}
+        {/* Phase finale */}
         <section>
           <h2 className="text-2xl font-semibold text-white mb-2 pl-3 border-l-4 border-accent-purple">
-            Réclamations & propositions
+            Phase finale
           </h2>
           <p className="text-white/70">
-            Pour signaler une erreur de points ou suggérer des améliorations, utilisez le formulaire de réclamation ou rejoignez-nous sur Discord.
+            À partir de fin juillet, la dernière ligne droite commence : quelques semaines pour creuser l’écart.
+            Les points finaux favorisent la polyvalence et le talent dans plusieurs catégories.
+            Pour viser le podium, élargissez votre champ d’action !
+          </p>
+        </section>
+
+        {/* Réclamations & suggestions */}
+        <section>
+          <h2 className="text-2xl font-semibold text-white mb-2 pl-3 border-l-4 border-accent-purple">
+            Réclamations & suggestions
+          </h2>
+          <p className="text-white/70">
+            Signalez une erreur de points ou faites une proposition via le formulaire dédié.
           </p>
         </section>
 
@@ -68,7 +113,7 @@ export default function RulesPage() {
             Récompense
           </h2>
           <p className="text-white/70">
-            Une petite récompense symbolique sera offerte au grand gagnant. Le plaisir de la compétition prime avant tout !
+            Une récompense symbolique sera remise au grand·e gagnant·e, mais le plaisir et l’esprit de compétition priment avant tout.
           </p>
         </section>
 
@@ -78,7 +123,8 @@ export default function RulesPage() {
             Dates clés
           </h2>
           <p className="text-white/70">
-            Du <strong>16 juin</strong> au <strong>31 août</strong>. De nouveaux défis seront ajoutés chaque semaine !
+            Du <strong>16 juin</strong> au <strong>31 août</strong>.<br />
+            De nouveaux défis et événements sont annoncés chaque semaine.
           </p>
         </section>
       </div>

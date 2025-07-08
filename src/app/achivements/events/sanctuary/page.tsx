@@ -410,8 +410,9 @@ else if (name === 'Eau bénie') {
       <div className="relative w-4/5 mx-auto px-4 py-16 space-y-12 text-center text-white">
         <h1 className="text-5xl font-extrabold">Le Sanctuaire</h1>
         <p className="text-lg text-blue-300 px-6">
-          Ici, vous pouvez invoquer la fortune et remporter des récompenses gratuites !<br/>
-          Chaque essai coûte des points de destinée, gagnés en relevant des défis quotidiens et hebdomadaires.
+          Ici, vous pouvez invoquer la fortune et remporter des récompenses spéciales !<br/>
+          Chaque essai coûte des points de destinée, gagnés en relevant des défis quotidiens et hebdomadaires. Les défis quotidiens sont réinitalisés tous les soirs vers 20h. Les défis hebdomadaires sont 
+          actualisés tous les mercredis soirs. 
         </p>
         <Link href="/achivements/events/sanctuary/pulls">
           <button className="inline-block mb-6 text-blue-200 border border-blue-400 rounded-full w-8 h-8 leading-8 hover:bg-blue-500 transition">

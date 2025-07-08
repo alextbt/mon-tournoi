@@ -1,0 +1,181 @@
+/* Navbar 3D Menu Styles (Scoped) */
+
+/* CSS Variables for menu dimensions */
+.navbar {
+  --menu-width: 37.5em;       /* Width of menu container */
+  --items: 4;                 /* Number of menu items */
+  --item-width: calc(var(--menu-width) / var(--items));
+  perspective: 2000px;
+  margin-top: 3em;            /* Adjust as needed */
+}
+
+/* Menu container */
+.navbar nav {
+  width: var(--menu-width);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+  position: relative;
+  margin: 0 auto;
+  transform-style: preserve-3d;
+}
+
+/* Menu items */
+.navbar nav .menu-item {
+  flex-basis: var(--item-width);
+  flex-grow: 1;
+  box-sizing: border-box;
+  padding: 1em 1.5em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 7.5em;
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transform-style: preserve-3d;
+  perspective: 200px;
+}
+
+/* Menu text */
+.navbar nav .menu-text,
+.navbar nav .menu-text a {
+  font-size: 1em;
+  color: #fff;
+  text-decoration: none;
+  text-shadow: 0 1px 5px rgba(0,0,0,0.1);
+  transition: color 0.1s ease-out;
+  text-align: center;
+  position: relative;
+}
+
+.navbar nav .menu-text a:hover {
+  color: rgba(255,255,255,0.5);
+}
+
+/* Sub-menu holder (3D panel) */
+#sub-menu-container {
+  position: absolute;
+  top: 2.5em;
+  left: 0;
+  width: 100%;
+  min-width: 100%;
+  z-index: -1;
+}
+
+#sub-menu-holder {
+  position: absolute;
+  top: 3rem;
+  left: 0;
+  width: calc(var(--menu-width) * 1.5);
+  height: 300px;
+  padding: 1em;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 7px rgba(0,0,0,0.1), 0 2px 20px rgba(0,0,0,0.3);
+  transform-origin: 50% 7em;
+  transform: rotateX(-25deg) scale(1);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+}
+
+/* On hover on menu-item, show sub-menu-holder with clip-path */
+.navbar nav .menu-item:hover ~ #sub-menu-container #sub-menu-holder {
+  opacity: 1;
+  pointer-events: all;
+  animation: clipPath 0.25s ease-out forwards;
+}
+
+@keyframes clipPath {
+  to {
+    transform: rotateX(0deg) scale(1);
+    opacity: 1;
+    top: 4.5em;
+  }
+}
+
+/* Clip-path positions based on item index */
+.navbar nav .menu-item:nth-of-type(1):hover ~ #sub-menu-container #sub-menu-holder,
+.navbar nav .menu-item:nth-of-type(4):hover ~ #sub-menu-container #sub-menu-holder {
+  clip-path: inset(0 28.75em 0 0 round 10px);
+  height: 14em;
+}
+
+.navbar nav .menu-item:nth-of-type(2):hover ~ #sub-menu-container #sub-menu-holder,
+.navbar nav .menu-item:nth-of-type(3):hover ~ #sub-menu-container #sub-menu-holder {
+  clip-path: inset(0 15em 0 0 round 10px);
+}
+
+.navbar nav .menu-item:nth-of-type(1):hover ~ #sub-menu-container #sub-menu-holder { left: calc(-9em - 1px); }
+.navbar nav .menu-item:nth-of-type(2):hover ~ #sub-menu-container #sub-menu-holder { left: calc(-6.5em - 1px); height: 18.75em; }
+.navbar nav .menu-item:nth-of-type(3):hover ~ #sub-menu-container #sub-menu-holder { left: calc(2.75em + 1px); height: 24.5em; }
+.navbar nav .menu-item:nth-of-type(4):hover ~ #sub-menu-container #sub-menu-holder { left: calc(19em + 1px); }
+
+/* Sub-menu panel inside menu-item */
+.menu-item .sub-menu {
+  position: absolute;
+  top: 7em;
+  pointer-events: none;
+  opacity: 0;
+  clip-path: inset(0 10em 10em 15em);
+  transition: all 0.25s ease-out;
+}
+
+.menu-item:hover .sub-menu {
+  pointer-events: all;
+  opacity: 1;
+  clip-path: inset(0 0 0 0);
+}
+
+/* Utility classes for sub-menu layout */
+.sub-menu.double { display: grid; grid-template-columns: 54% 50%; }
+.sub-menu.triple { display: grid; grid-template-columns: 55% 45%; }
+
+/* Arrow indicator under menu-text on hover */
+.menu-text:after {
+  content: '';
+  position: absolute;
+  bottom: -0.5em;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 10px solid transparent;
+  border-top-color: #fff;
+  opacity: 0;
+  transition: opacity 0.25s ease-out, bottom 0.25s ease-out;
+}
+
+.menu-item:hover .menu-text:after {
+  opacity: 1;
+  bottom: 0.25em;
+}
+
+/* Additional styling (titles, icons, bottom container) */
+.menu-item .title {
+  font-weight: 500;
+  color: #2c4656;
+  margin-bottom: 0.25em;
+}
+
+.icon-box { position: relative; cursor: pointer; }
+.icon-box .icon { float: left; font-size: 1.25em; color: #2c4656; margin-right: 1em; }
+.icon-box .text { float: left; color: #9ea9af; }
+.icon-box .text i { font-size: 0.75em; clip-path: inset(0 100% 0 0); transition: clip-path 0.1s ease-out; }
+.icon-box:hover .text i { clip-path: inset(0 0 0 0); }
+.icon-box:hover .icon, .icon-box:hover .title, .icon-box:hover .sub-text { color: #596e7b; }
+
+#sub-menu-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 5em;
+  background: rgba(212, 227, 234, 0.44);
+  opacity: 0;
+  transition: all 0.25s ease-out;
+}
+
+.menu-item.highlight:hover ~ #sub-menu-container #sub-menu-holder #sub-menu-bottom {
+  opacity: 1;
+  height: 7.5em;
+}

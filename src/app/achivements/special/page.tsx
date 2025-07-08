@@ -41,7 +41,7 @@ export default function SpecialAchievementsPage() {
   };
 
   return (
-    <PageLayout title="Réalisation spéciale">
+    <PageLayout title="">
       <div className="mx-auto w-full sm:w-2/3 lg:w-1/2 px-4 py-12">
         <h1 className="text-3xl font-bold text-white text-center mb-4">
           Soumettre une réalisation spéciale
@@ -80,7 +80,7 @@ export default function SpecialAchievementsPage() {
           </div>
           <button
             type="submit"
-            className="w-full py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition"
+            className="w-full py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition"
           >
             Soumettre la réalisation
           </button>

@@ -18,15 +18,14 @@ interface Run {
 
 // World record speeds (m/s) for various race types
 const WORLD_SPEEDS: Record<string, { distance_km: number; time_s: number }> = {
-  Sprint: { distance_km: 0.1, time_s: 9.58 },            // 100 m
-  'Demi-fond': { distance_km: 1.5, time_s: 206 },         // 1500 m
-  Fond: { distance_km: 5, time_s: 755 },                  // 5000 m
-  'Semi-marathon': { distance_km: 21.0975, time_s: 3451 },// 21.0975 km
-  Marathon: { distance_km: 42.195, time_s: 7299 },        // 42.195 km
-  Fractionné: { distance_km: 1, time_s: 60 },             // assume 1km in 1min benchmark
-  'Distance Libre': { distance_km: 1, time_s: 300 },      // assume 1km in 5min benchmark
+  Sprint: { distance_km: 0.1, time_s: 9.58 },
+  'Demi-fond': { distance_km: 1.5, time_s: 206 },
+  Fond: { distance_km: 5, time_s: 755 },
+  'Semi-marathon': { distance_km: 21.0975, time_s: 3451 },
+  Marathon: { distance_km: 42.195, time_s: 7299 },
+  Fractionné: { distance_km: 1, time_s: 60 },
+  'Distance Libre': { distance_km: 1, time_s: 300 },
 };
-
 const RUN_TYPES = Object.keys(WORLD_SPEEDS);
 
 export default function CoursePage() {
@@ -52,7 +51,6 @@ export default function CoursePage() {
     })();
   }, []);
 
-  // compute user speed (m/s)
   const speed = useMemo(() => {
     const km = parseFloat(distance) || 0;
     const mn = parseFloat(timeMin) || 0;
@@ -67,12 +65,10 @@ export default function CoursePage() {
       alert('Distance et temps doivent être supérieurs à 0');
       return;
     }
-    // performance ratio vs world speed
-    const perfSpeed = (km * 1000) / (mn * 60);        // m/s
+    const perfSpeed = (km * 1000) / (mn * 60);
     const wr = WORLD_SPEEDS[type];
     const worldSpeed = (wr.distance_km * 1000) / wr.time_s;
     const ratio = perfSpeed / worldSpeed;
-    // map ratio to points: 50pt baseline, 250pt for ratio>=1
     let pts = Math.round(ratio * 200 + 50);
     if (pts < 50) pts = 50;
     if (pts > 250) pts = 250;
@@ -110,71 +106,130 @@ export default function CoursePage() {
 
   return (
     <PageLayout title="Course – Enregistrements">
-      <div className="mx-auto w-full lg:w-2/3 px-6 py-12 space-y-6">
-        <h2 className="text-3xl font-bold text-white text-center">Enregistrer une course</h2>
-        <p className="text-center text-white/70">
-          Total : <span className="font-semibold">{totalPoints} pts</span> | Record : <span className="font-semibold">{bestPts} pts</span>
-        </p>
+      <div className="mx-auto w-full lg:w-2/3 px-6 py-12">
+        <div className="p-6 bg-white/10 backdrop-blur-sm rounded-2xl shadow-lg space-y-6">
+          <h2 className="text-3xl font-bold text-white text-center">
+            Enregistrer une course
+          </h2>
+          <p className="text-center text-white/70">
+            Total :{' '}
+            <span className="font-semibold text-white">{totalPoints} pts</span>{' '}
+            | Record :{' '}
+            <span className="font-semibold text-white">{bestPts} pts</span>
+          </p>
 
-        <section className="bg-bg-light p-6 rounded-lg shadow-lg grid grid-cols-1 md:grid-cols-2 gap-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {msg && <p className="text-green-600 text-center font-semibold">{msg}</p>}
-            <div>
-              <label className="block mb-1 font-semibold text-black">Type de course</label>
-              <select
-                value={type}
-                onChange={e => setType(e.target.value)}
-                className="w-full p-3 rounded border border-gray-400 bg-white text-black focus:outline-none"
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Formulaire */}
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {msg && (
+                <p className="text-green-300 text-center font-semibold">
+                  {msg}
+                </p>
+              )}
+              <div>
+                <label className="block mb-1 font-semibold text-white">
+                  Type de course
+                </label>
+                <select
+                  value={type}
+                  onChange={e => setType(e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg bg-white/20 text-white placeholder-white/70
+                             focus:outline-none focus:ring-2 focus:ring-white/60 transition"
+                >
+                  {RUN_TYPES.map(r => (
+                    <option key={r} className="text-black">
+                      {r}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block mb-1 font-semibold text-white">
+                  Distance (km)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={distance}
+                  onChange={e => setDistance(e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg bg-white/20 text-white placeholder-white/70
+                             focus:outline-none focus:ring-2 focus:ring-white/60 transition"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 font-semibold text-white">
+                  Temps (min)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  value={timeMin}
+                  onChange={e => setTimeMin(e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg bg-white/20 text-white placeholder-white/70
+                             focus:outline-none focus:ring-2 focus:ring-white/60 transition"
+                />
+              </div>
+              <p className="text-white font-medium">
+                Vitesse :{' '}
+                <span className="font-semibold text-green-300">{speed} km/h</span>
+              </p>
+              <button
+                type="submit"
+                className="w-full py-3 rounded-lg bg-green-500 hover:bg-green-600 text-white
+                           font-semibold transition"
               >
-                {RUN_TYPES.map(r => <option key={r} className="text-black">{r}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block mb-1 font-semibold text-black">Distance (km)</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={distance}
-                onChange={e => setDistance(e.target.value)}
-                className="w-full p-3 rounded border border-gray-400 bg-white text-black focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block mb-1 font-semibold text-black">Temps (min)</label>
-              <input
-                type="number"
-                min="0"
-                value={timeMin}
-                onChange={e => setTimeMin(e.target.value)}
-                className="w-full p-3 rounded border border-gray-400 bg-white text-black focus:outline-none"
-              />
-            </div>
-            <p className="text-black font-medium">
-              Vitesse : <span className="font-semibold">{speed} km/h</span>
-            </p>
-            <button
-              type="submit"
-              className="w-full py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition"
-            >
-              Enregistrer la course
-            </button>
-          </form>
+                Enregistrer la course
+              </button>
+            </form>
 
-          <div>
-            <h3 className="text-xl font-semibold text-white mb-4">Historique des courses</h3>
-            <ul className="space-y-3 max-h-[400px] overflow-y-auto text-white">
-              {runs.map(r => (
-                <li key={r.id} className="flex justify-between border-b border-gray-700 pb-2">
-                  <span>
-                    [{r.type}] {new Date(r.run_at).toLocaleDateString()} – {r.distance_km} km en {r.time_min} min
-                  </span>
-                  <span className="font-bold">+{r.points} pts</span>
-                </li>
-              ))}
-            </ul>
+            {/* Historique */}
+            <div>
+              <h3 className="text-xl font-semibold text-white mb-4">
+                Historique des courses
+              </h3>
+              <div className="overflow-x-auto bg-white/10 backdrop-blur-sm rounded-lg shadow-inner">
+                <table className="w-full text-white">
+                  <thead className="sticky top-0 bg-white/20 backdrop-blur-sm">
+                    <tr>
+                      <th className="px-3 py-2 text-left">Date</th>
+                      <th className="px-3 py-2 text-left">Type</th>
+                      <th className="px-3 py-2 text-right">Distance</th>
+                      <th className="px-3 py-2 text-right">Temps</th>
+                      <th className="px-3 py-2 text-right">Vitesse</th>
+                      <th className="px-3 py-2 text-right">Pts</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {runs.map((r, i) => (
+                      <tr
+                        key={r.id}
+                        className={`${i % 2 === 0 ? 'bg-white/5' : ''} hover:bg-white/20 transition-colors`}
+                      >
+                        <td className="px-3 py-2">
+                          {new Date(r.run_at).toLocaleDateString('fr-FR')}
+                        </td>
+                        <td className="px-3 py-2">{r.type}</td>
+                        <td className="px-3 py-2 text-right">
+                          {r.distance_km} km
+                        </td>
+                        <td className="px-3 py-2 text-right">
+                          {r.time_min} min
+                        </td>
+                        <td className="px-3 py-2 text-right font-semibold">
+                          {r.speed} km/h
+                        </td>
+                        <td className="px-3 py-2 text-right font-bold">
+                          +{r.points}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
-        </section>
+        </div>
       </div>
     </PageLayout>
   );

@@ -84,7 +84,7 @@ export default function HadesEventPage() {
           Si vous n&apos;avez pas le jeu, que vous ne souhaitez pas l&apos;achetez, ou que vous ne disposez pas d&apos;un compte Netflix sur iOS, ce n&apos;est pas un problème. 
           Cet événement est facultatif au même titre que l&apos;est la catégorie eSport. Sinon, cliquez ici pour continuer.
         </p>
-        <Link href="/achivements/events/hadestempo">
+        <Link href="/achivements/events/hades/game">
   <button
     className="
       w-24 h-24      /* taille fixe pour ton bouton */

@@ -226,7 +226,7 @@ async function handleSaveProfile() {
         const wins = s.record?.win ?? 0;
         const losses = s.record?.loss ?? 0;
         const draws = s.record?.draw ?? 0;
-        return sum + wins * 1.5 - losses * 0.6 + draws * 0.3;
+        return sum + wins * 1.5 + losses * 0.6 + draws * 1.2;
       }, 0);
   }
 
@@ -363,8 +363,9 @@ async function handleSaveProfile() {
               </div>
 
               {/* Points parties */}
-              <div className="p-6 border-t border-border text-center">
-                <p className="text-lg font-heading text-primary-dark">Points des parties: {partyPoints}</p>
+              <div className="p-6 border-t border-border text-align:left">
+                <h2>Calcul des points : ✔ (victoire) = + 1,5 pts ; ✘ (défaite) = + 0,6 pts ; = (égalité) = + 1,2 pts.</h2>
+                <p className="text-lg font-heading text-primary-dark"><strong>Points des parties: {partyPoints}</strong></p>
               </div>
             </div>
 

@@ -46,6 +46,7 @@ html, body {
 
 /* Boutons de nav discrets pour la navbar */
 .btn-nav {
+  font-family: 'Exo 2', sans-serif ;
   padding: 0.5rem 1rem;
   border-radius: 0.375rem;
   font-weight: 600;
@@ -131,7 +132,7 @@ html, body {
   box-shadow: 0 0 12px var(--color-yellow-200), 0 0 24px var(--color-yellow-300);
 }
 
-/* appliquez cette classe uniquement au titre */
+/* ancienne police "Meta" */
 .title {
   transition: all 0.5s;
   -webkit-text-stroke: 1px #d6f4f4;

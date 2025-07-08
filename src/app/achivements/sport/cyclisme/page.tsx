@@ -60,7 +60,7 @@ export default function CyclismePage() {
     }
 
     // Calculate points
-    const pts = Math.round(dist * 10 + (totalSeconds / 200));
+    const pts = Math.round(dist * 2 + (totalSeconds / 120));
 
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     if (sessionError) console.error('Session fetch error:', sessionError);
@@ -118,7 +118,7 @@ export default function CyclismePage() {
         {/* Form Container */}
         <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-10 text-white w-full">
           <h2 className="text-2xl font-semibold text-center mb-6">
-            Inscrivez vos résultats depuis le 22 juin !
+            Gagnez des points en fonction de la distance parcourue et du temps! 
           </h2>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0">
@@ -167,6 +167,7 @@ export default function CyclismePage() {
               onChange={e => setElevation(e.target.value)}
               className="w-full p-3 rounded bg-gray-800 placeholder-gray-400"
             />
+            <h3>Calcul des points : temps total (en secondes) /120 + distance x2.</h3>
             <button
               type="submit"
               className="w-full py-4 bg-stone-600 hover:bg-stone-700 rounded-lg font-semibold text-lg"

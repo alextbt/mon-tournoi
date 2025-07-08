@@ -58,6 +58,7 @@ export default function StepsEventPage() {
     fetchData();
   }, []);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const { data: { session } } = await supabase.auth.getSession();
@@ -102,6 +103,9 @@ export default function StepsEventPage() {
         <p className="text-lg text-green-800 text-center px-6">
           Cet événement est collaboratif. Faites progresser tous ensemble la jauge des pas pour obtenir des récompenses. Vous pouvez rentrer vos pas depuis le dimanche 22 juin.
         </p>
+        <h1 className="text-4xl font-extrabold text-red-900 text-center">
+          Cet événement est terminé. Les récompenses collectives seront distribuées sous peu. Merci de votre participation !
+        </h1>
 
         {/* Barre totale */}
         <div className="space-y-2">
@@ -161,40 +165,7 @@ export default function StepsEventPage() {
         <div className="flex flex-col md:flex-row md:space-x-8 space-y-8 md:space-y-0">
           {/* Formulaire */}
           <section className="w-full md:w-1/2 bg-white/80 backdrop-blur-md p-6 rounded-lg shadow-lg">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-green-900 font-medium mb-1">
-                  Nombre de pas effectués
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  value={stepsInput}
-                  onChange={(e) => setStepsInput(e.target.value)}
-                  className="w-full p-3 rounded border border-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 text-green-600"
-                  placeholder=""
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-green-900 font-medium mb-1">
-                  Date (JJ/MM/AAAA)
-                </label>
-                <input
-                  type="date"
-                  value={dateInput}
-                  onChange={(e) => setDateInput(e.target.value)}
-                  className="w-full p-3 rounded border border-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 text-green-600"
-                  required
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full py-3 bg-green-700 hover:bg-green-800 text-white font-semibold rounded-lg transition shadow-lg"
-              >
-                Soumettre mes pas de la journée
-              </button>
-            </form>
+            <h1 className="text-xl font-semibold mb-4 text-green-900">L’événement est terminé, vous ne pouvez plus enregistrer davantage de pas !</h1>
           </section>
 
           {/* Récompenses */}

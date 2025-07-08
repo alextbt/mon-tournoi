@@ -25,17 +25,20 @@ const events: Record<string, string> = {
   '2025-06-28': 'Ajout de la possibilité de lier son compte Chess.com avec son profil.',
   '2025-07-01': 'Modification de la page Musculation : retrait de la partie sur la course. Ajout d’une nouvelle catégorie Course dans le Sport. Elle contiendra également la marche et exercices de course spéciaux. Création d’une nouvelle page « Réalisations spéciales » (actuellement sur la page musculation).',
   '2025-07-02': 'Début de l’événement « Sanctuaire ».',
-  '2025-07-03': 'Début de l’événement « Hadès ».',
-  '2025-07-04': 'Correction et actualisation de la page Classement et Profil. Ajout de la colonne « Réalisations » dans le classement. Correction de la page Course.',
-  '2025-07-08': 'Mise à jour v1.3 : fin de l’événement « Un grand pas pour l’humanité ! » ; début des événements « Spear of Justice » et « Megalovania » ; ajout de la possibilité d’enregistrer des séances de marche sur la page Course ; précision du gain de points dans les catégories de cyclisme et d’échecs ; réduction des points obtenus à travers la réalisation de voies normales, difficiles et très difficiles pour l’escalade ainsi que pour les performances sur la page cyclisme ; refonte de la page des règles (règles plus précises et plus explicites ainsi que l’explication du choix du comptage des points pour toutes les catégories) et refonte totale de la page musculation : visuel des exercices avec méthodes et conseils pour chaque exercices, équilibrage des points pour tous les exercices (à la place de l’uniformisation actuelle). Enregistrement supplémentaire des séances en fonction des parties du corps travaillées. Ajout de points supplémentaire par séries de plusieurs jours d’entraînement et autres.',
-  '2025-07-09': 'Nouveaux défis hebdomadaires pour le « Sanctuaire ».',
+  '2025-07-04': 'Correction et actualisation de la page Classement et Profil. Ajout de la colonne « Réalisations » dans le classement.',
+  '2025-07-08': 'Mise à jour v1.3 : fin de l’événement « Un grand pas pour l’humanité ! » ; début des événements « Spear of Justice » et « Megalovania » ; ajout de la possibilité d’enregistrer des séances de marche sur la page Course et correction de la page ; précision du gain de points dans les catégories de cyclisme et d’échecs ; réduction des points obtenus à travers la réalisation de voies normales, difficiles et très difficiles pour l’escalade ainsi que pour les performances sur la page cyclisme ; refonte de la page des règles (règles plus précises et plus explicites ainsi que l’explication du choix du comptage des points pour toutes les catégories) et refonte totale de la page musculation : visuel des exercices avec méthodes et conseils pour chaque exercices, équilibrage des points pour tous les exercices (à la place de l’uniformisation actuelle). Enregistrement supplémentaire des séances en fonction des parties du corps travaillées. Ajout de points supplémentaire par séries de plusieurs jours d’entraînement et autres.',
+  '2025-07-09': 'Nouveaux défis hebdomadaires pour le « Sanctuaire ». Complétion de certains éléments et fonctionnalités de la page Musculation.',
+  '2025-07-10': 'Correction des pages « Spear of Justice » et « Megalovania ».',
+  '2025-07-11': 'Actualisation des pages générales de Sport et de Esport.',
   '2025-07-13': 'Ajout d’une nouvelle source dans le « Sanctuaire ».',
   '2025-07-16': 'Nouveaux défis hebdomadaires pour le « Sanctuaire ».',
-  '2025-07-17': 'Fin de l’événement « Spear of Justice ».',
+  
+  '2025-07-19': 'Ajout de la catégorie Esport « Osu ».',
+  '2025-07-21': 'Fin de l’événement « Spear of Justice ».',
   '2025-07-23': 'Nouveaux défis hebdomadaires pour le « Sanctuaire ».',
-  '2025-07-24': 'Fin de l’événement « Hadès ».',
-  '2025-07-28': 'Fin de l’événement « Megalovania ».',
+  '2025-07-28': 'Fin de l’événement « Megalovania ». Début de l’événement « Hadès ».',
   '2025-07-30': 'Fin de l’événement « Sanctuaire ».',
+  '2025-08-11': 'Fin de l’événement « Hadès ».',
 };
 
   // 2) Génère toutes les dates entre deux bornes incluses
@@ -93,15 +96,48 @@ const events: Record<string, string> = {
           <div className="text-white space-y-6">
             <h2 className="text-2xl font-semibold">Version actuelle</h2>
             <p>
-              v1.2.3 – Mise à jour du mercredi 2 juillet
+              v1.3 – Mise à jour du mardi 8 juillet
             </p>
             <p>
-              Modification de la page Musculation : retrait de la partie sur la course. Ajout d’une nouvelle catégorie Course dans le Sport. Elle contiendra également la marche et exercices de course spéciaux. 
-              Création d’une nouvelle page « Réalisations spéciales » (autrefois sur la page musculation) : elle accueille désormais des réalisations spéciales de votre choix, quoi que ce soit ! Début de 
-              l’événement « Sanctuaire ». 
+              <strong>Événements</strong> 
+              </p>
+              <p>
+              - L’événement « Hadès » a été fortement décalé en raison de problèmes liés à la base de donnée, demandant beaucoup de travail pour être réparé. Étant donné que l’événement n’est pas une priorité en 
+              soi, le temps que tout cela soit réglé, l’événement commençera fin juillet et va durer deux semaines jusqu’à mi-août. Allez voir la Roadmap pour plus d’informations. Merci de votre patience. <br></br>
+              - Fin de l’événement « Un grand pas pour l’humanité ! ». <br></br>
+              - Début des événements « Spear of Justice » et « Megalovania ».
+              </p>
+              <p>
+                <strong>Sport et Esport</strong>
+                </p>
+                <p>
+              - Modification de la page Course : ajout de la possibilité d’enregistrer des séances de marche et corrections de la page. <br></br>
+              - Modification de la page Escalade : réduction des points obtenus à travers la réalisation de voies difficiles (12 pts par voie → 8 pts par voie). <br></br>
+              - Modification de la page Musculation : refonte totale de la page musculation. Cette refonte implique : une refonte graphique, un visuel des exercices avec méthodes et conseils pour 
+              chaque exercices, un équilibrage des points pour tous les exercices en fonction de la difficulté à monter en poids (à la place de l’uniformisation actuelle), des succès spéciaux dédiés à chaque partie
+              du corps travaillée, un ajout de points supplémentaire par séries de plusieurs jours d’entraînement ainsi qu’un classement spécial permettant de se comparer ou de partager ses résultats avec les 
+              autres. 
+              </p>
+              <p>
+                <strong>Autres modifications générales</strong>
+                </p>
+                <p>
+              - Précision du gain de points dans les catégories de cyclisme, de course et d’échecs. <br></br>
+              - Refonte de la page des règles : règles plus précises et plus explicites ainsi que l’explication du choix du comptage des points pour toutes les catégories. <br></br>
+              - Adaptation du format de la page Profil pour téléphone.
             </p>
             <h3 className="text-xl font-semibold">Anciennes mises à jour</h3>
             <div className="space-y-2">
+            <details className="bg-white/10 p-4 rounded-lg">
+                <summary className="cursor-pointer font-medium">
+                  v1.2.3 – Mise à jour du mercredi 2 juillet
+                </summary>
+                <p className="mt-2 text-white/80">
+                  Modification de la page Musculation : retrait de la partie sur la course. Ajout d’une nouvelle catégorie Course dans le Sport. Elle contiendra également la marche et exercices de course spéciaux. 
+              Création d’une nouvelle page « Réalisations spéciales » (autrefois sur la page musculation) : elle accueille désormais des réalisations spéciales de votre choix, quoi que ce soit ! Début de 
+              l’événement « Sanctuaire ».  
+                </p>
+              </details>
               <details className="bg-white/10 p-4 rounded-lg">
                 <summary className="cursor-pointer font-medium">
                   v1.2.2 – Mise à jour du lundi 30 juin.
