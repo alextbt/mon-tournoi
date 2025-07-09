@@ -39,13 +39,12 @@ const EXERCISES: Record<string,string[]> = {
     'Leg curl assis', 'Leg curl debout', 'Mollets à la presse', 'Sissy squat',
   ],
   Épaules: [
-    'Développé militaire', 'Développé Arnold', 'Élévations latérales',
+    'Développé militaire', 'Développé Arnold', 'Développé assis (haltères)', 'Élévations latérales (haltères)', 'Élévations latérales (poulie)',
     'Élévations frontales', 'Oiseau poulies', 'Rowing menton',
   ],
   Bras: [
-    'Curl barre droite', 'Curl barre EZ', 'Curl haltères', 'Curl incliné',
-    'Curl poulie vis-à-vis', 'Extensions triceps haltère', 'Extension triceps poulie',
-    'Dip triceps',
+    'Curl barre droite', 'Curl barre EZ', 'Curl concentration', 'Curl marteau', 'Curl haltères assis', 'Curl pupitre', 'Curl incliné',
+    'Extensions triceps haltère', 'Extension triceps poulie haute', 'Extension triceps poulie basse', 'Pompes',
   ],
   Abdos: [
     'Crunch au sol', 'Relevé de jambes suspendu', 'Planche', 'Gainage latéral',
@@ -90,19 +89,23 @@ const EXERCISE_MEDIA: Record<string,{type:'image'|'video';src:string}> = {
   // Épaules
   'Développé militaire':            { type: 'image', src: '/media/developpe-militaire.jpg' },
   'Développé Arnold':               { type: 'image', src: '/media/developpe-arnold.jpg' },
-  'Élévations latérales':           { type: 'image', src: '/media/elevations-laterales.jpg' },
+  'Développé assis (haltères)':     { type: 'image', src: '/media/developpe-assis-halteres.jpg' },
+  'Élévations latérales (haltères)':{ type: 'image', src: '/media/elevations-laterales.jpg' },
+  'Élévations latérales (poulie)':  { type: 'image', src: '/media/elevation-laterale-poulie.jpg' },
   'Élévations frontales':           { type: 'image', src: '/media/elevations-frontales.jpg' },
   'Oiseau poulies':                 { type: 'image', src: '/media/oiseau-poulies.jpg' },
   'Rowing menton':                  { type: 'image', src: '/media/rowing-menton.jpg' },
   // Bras
   'Curl barre droite':               { type: 'image', src: '/media/curl-barre-droite.jpg' },
   'Curl barre EZ':                   { type: 'image', src: '/media/curl-barre-ez.jpg' },
-  'Curl haltères':                   { type: 'image', src: '/media/curl-halteres.jpg' },
+  'Curl concentration':              { type: 'image', src: '/media/curl-concentration.jpg' },
+  'Curl marteau':                    { type: 'image', src: '/media/curl-marteau.jpg' },
+  'Curl haltères assis':             { type: 'image', src: '/media/curl-assis.jpg' },
+  'Curl pupitre':                    { type: 'image', src: '/media/curl-pupitre.jpg' },
   'Curl incliné':                    { type: 'image', src: '/media/curl-incline.jpg' },
-  'Curl poulie vis-à-vis':           { type: 'image', src: '/media/curl-poulie-vis-a-vis.jpg' },
-  'Extensions triceps haltère':      { type: 'image', src: '/media/extensions-triceps-haltere.jpg' },
-  'Extension triceps poulie':        { type: 'image', src: '/media/extension-triceps-poulie.jpg' },
-  'Dip triceps':                     { type: 'image', src: '/media/dip-triceps.jpg' },
+  'Extensions triceps haltère':      { type: 'image', src: '/media/extension-triceps-halteres.jpg' },
+  'Extension triceps poulie haute':  { type: 'image', src: '/media/extension-triceps-poulie-haute.jpg' },
+  'Extension triceps poulie basse':  { type: 'image', src: '/media/extension-triceps-poulie-basse.jpg' },
   // Abdos
   'Crunch au sol':                   { type: 'image', src: '/media/crunch-au-sol.jpg' },
   'Relevé de jambes suspendu':       { type: 'image', src: '/media/releve-de-jambes-suspendu.jpg' },
@@ -114,146 +117,170 @@ const EXERCISE_MEDIA: Record<string,{type:'image'|'video';src:string}> = {
 
 // Descriptions explicatives
 const EXERCISE_DESCRIPTIONS: Record<string,string> = {
-  // Pecs
+// Pecs
   'Développé couché (barre)':
-    'Allongez-vous sur un banc plat, pieds bien à plat au sol. Prenez la barre à la largeur des épaules en prise pronation (paumes vers l’avant). Décalez légèrement la barre pour que vos avant-bras soient verticaux. Inspirez, puis descendez lentement la barre jusqu’à toucher la poitrine (coudes à environ 45° du corps). Expirez en poussant la barre vers le haut sans verrouiller complètement les coudes. Concentrez-vous sur une trajectoire verticale et gardez le dos plaqué.',
+    `Allongez-vous sur un banc plat avec les pieds fermement posés au sol, écartés de la largeur des hanches. Saisissez la barre en prise pronation (paumes vers l’avant) légèrement plus large que la largeur des épaules. Engagez les omoplates en les serrant pour stabiliser le haut du dos. Inspirez en descendant la barre de façon contrôlée jusqu’à ce qu’elle effleure légèrement la poitrine, coudes à environ 45°. Expirez puissamment en poussant la barre vers le haut en gardant une trajectoire la plus verticale possible, sans verrouiller complètement les coudes. Gardez le bas du dos légèrement cambré et les abdominaux gainés.`,
 
   'Développé couché (haltères)':
-    'Allongez-vous sur un banc plat avec un haltère dans chaque main. Positionnez les haltères au niveau des épaules, paumes se faisant face ou légèrement tournées. Inspirez, puis poussez simultanément les haltères vers le haut jusqu’à l’extension des bras. Redescendez lentement en contrôlant la charge. Gardez les poignets alignés avec les avant-bras et les épaules stables.',
+    `Allongez-vous sur un banc plat avec un haltère dans chaque main. Positionnez-les au niveau des épaules, paumes se faisant face ou légèrement tournées vers l’avant. Serrez les omoplates et gardez le dos stable. Inspirez, puis poussez simultanément les haltères vers le haut jusqu’à l’extension complète des bras. Expirez en contrôlant la descente des haltères de manière symétrique, en suivant la même trajectoire. Évitez les balancements et gardez les poignets alignés.`,
 
   'Développé incliné':
-    'Réglez un banc incliné à 30–45°. Allongez-vous avec les pieds au sol. Prenez la barre ou les haltères comme au développé couché. Inspirez en descendant la charge vers le haut des pectoraux. Expirez en poussant vers le haut. Veillez à ne pas cambrer excessivement le dos.',
+    `Réglez un banc incliné entre 30 et 45°. Allongez-vous avec les pieds au sol et la tête en haut. Saisissez la barre ou les haltères comme pour un développé couché. Inspirez en descendant la charge vers la partie supérieure des pectoraux, maintenez les coudes à 45° du corps. Expirez en poussant vers le haut jusqu’à l’extension des bras, sans cambrer excessivement le dos ni cambrer la nuque.`,
 
   'Développé décliné':
-    'Placez le banc en légère déclinaison (10–20°). Allongez-vous et saisissez la barre. Inspirez et descendez-la vers le bas de la poitrine. Expirez en poussant vers le haut. Gardez les abdos gainés pour stabiliser le bassin.',
+    `Placez le banc en légère déclinaison (10–20°). Allongez-vous et saisissez la barre en prise pronation. Inspirez en descendant la barre vers la partie inférieure de la poitrine. Expirez en poussant vers le haut, en gardant les abdos contractés pour stabiliser le bassin et éviter de glisser.`,
 
   'Pompes':
-    'Positionnez-vous en planche haute, mains sous les épaules et pieds légèrement écartés. Inspirez en fléchissant les coudes pour abaisser la poitrine jusqu’à quelques centimètres du sol. Expirez en repoussant. Conservez le corps aligné de la tête aux talons et contractez les abdos.',
+    `Positionnez-vous en planche haute, mains sous les épaules et pieds légèrement écartés. Gardez le corps aligné de la tête aux talons. Inspirez en fléchissant les coudes pour abaisser la poitrine jusqu’à quelques centimètres du sol, sans laisser les hanches s’affaisser. Expirez en repoussant, en contractant abdos et fessiers pour maintenir la planche.`,
 
   'Dips pectoraux':
-    'Sur barres parallèles, saisissez les poignées et décollez les pieds du sol. Penchez légèrement le buste en avant et descendez les coudes vers l’arrière jusqu’à ce que les épaules soient au niveau des coudes. Inspirez en descendant, puis expirer en remontant en verrouillant légèrement les coudes.',
+    `Sur barres parallèles, saisissez les poignées et décollez les pieds du sol. Penchez légèrement le buste vers l’avant (environ 15°) pour cibler les pectoraux. Inspirez en fléchissant les coudes et descendez jusqu’à ce que les épaules soient alignées avec les coudes. Expirez en poussant pour remonter, coudes légèrement ouverts et tronc stable.`,
 
   'Écarté couché (haltères)':
-    'Allongez-vous sur un banc plat avec un haltère dans chaque main, bras légèrement fléchis. Inspirez en écartant les bras en arc de cercle jusqu’à sentir un étirement en poitrine. Expirez en rapprochant les haltères devant la poitrine, coudes fixes.',
+    `Allongez-vous sur un banc plat avec un haltère dans chaque main, bras presque tendus et coudes légèrement fléchis. Inspirez en écartant les bras en arc de cercle jusqu’à ressentir un étirement dans la poitrine. Expirez en ramenant les haltères devant vous, en gardant la même amplitude, sans verrouiller les coudes.`,
 
   'Écarté aux poulies':
-    'Placez les poulies en hauteur, une poignée dans chaque main. Reculez d’un pas, pieds écartés. Inspirez en ouvrant les bras à l’horizontale, légèrement fléchis. Expirez en ramenant les poignées devant vous, en gardant les épaules basses.',
+    `Debout entre deux poulies, poignées en main. Reculez légèrement pour créer une tension. Inspire en ouvrant les bras latéralement, coudes fixes et bras à hauteur d’épaules. Expire en ramenant les poignées devant la poitrine, en contractant les pectoraux.`,
 
   'Pec-deck':
-    'Asseyez-vous sur la machine pec-deck, dos plaqué contre le dossier. Positionnez les coudes sur les pads et les mains sur les poignées. Inspirez en écartant les bras, puis expirez en pressant vers l’avant jusqu’à ce que les mains se rapprochent.',
+    `Asseyez-vous sur la machine pec-deck, dos plaqué contre le dossier. Positionnez les coudes sur les pads et saisissez les poignées. Inspirez en écartant les bras jusqu’à 90°, en gardant le dos contre le dossier. Expirez en pressant les pads l’un contre l’autre devant la poitrine, en contractant les pectoraux.`,
 
   // Dos
   'Tractions pronation':
-    'Suspendez-vous à une barre fixe, prise pronation (paumes vers l’avant), mains un peu plus écartées que les épaules. Inspirez puis contractez les dorsaux pour tirer le menton au-dessus de la barre. Expirez en redescendant lentement. Gardez le corps droit et évitez le balancement.',
+    `Suspendez-vous à une barre fixe, prise pronation (paumes vers l’avant), mains un peu plus larges que les épaules. Corps droit, jambes croisées. Inspirez en contractant les dorsaux pour tirer le menton au-dessus de la barre. Expirez en redescendant lentement sans balancer.`,
 
   'Tractions supination':
-    'Suspendez-vous à la barre, prise supination (paumes vers vous), mains à largeur des épaules. Inspirez en tirant la poitrine vers la barre, coudes vers le bas. Expirez en contrôlant la descente. Gardez les épaules basses.',
+    `Suspendez-vous à la barre, prise supination (paumes vers vous), mains à largeur d’épaules. Inspirez en tirant la poitrine vers la barre, coudes pointant vers le bas. Expirez en contrôlant la descente, sans cambrer le dos.`,
 
   'Rowing barre':
-    'Debout, pieds à largeur des hanches, barre devant les tibias. Fléchissez les genoux et penchez le buste en avant, dos droit. Prenez la barre en prise pronation. Inspirez en tirant la barre vers le nombril, coudes proches. Expirez en redescendant. Maintenez la colonne neutre.',
+    `Debout, pieds à largeur des hanches, barre devant les tibias. Genoux légèrement fléchis, buste penché à 45° dos neutre. Prise pronation. Inspirez en tirant la barre vers le nombril en serrant les omoplates. Expirez en revenant.`,
 
   'Rowing haltère unilatéral':
-    'Placez un genou et une main sur un banc. Avec l’autre main, saisissez un haltère. Inspirez en tirant l’haltère vers la hanche, coude près du corps. Expirez en redescendant. Gardez le dos droit et le buste stable.',
+    `Placez un genou et une main sur un banc. Avec l’autre main, saisissez un haltère. Dos droit. Inspirez en tirant l’haltère vers la hanche, coude près du corps. Expirez en redescendant lentement.`,
 
   'Tirage horizontal':
-    'Assis face à la poulie basse, pieds calés. Prenez la barre en prise neutre ou pronation. Inspirez en tirant la barre vers le ventre, serrant les omoplates. Expirez en revenant lentement à la position initiale, bras tendus.',
+    `Assis face à la poulie basse, pieds calés. Prise neutre ou pronation. Inspirez en tirant vers le ventre en serrant les omoplates. Expirez en revenant bras tendus.`,
 
   'Tirage vertical':
-    'Assis face à la poulie haute, genoux sous les cales. Prenez la barre en pronation, mains écartées. Inspirez en tirant la barre vers la poitrine, coudes vers le bas. Expirez en contrôlant la montée.',
+    `Assis face à la poulie haute, genoux calés. Prise pronation, mains larges. Inspirez en tirant la barre vers la poitrine, coudes vers le bas. Expirez en remontant contrôlé.`,
 
   'Shrug (haussement)':
-    'Debout, haltères ou barre en mains, bras tendus. Inspirez, puis hausser les épaules vers les oreilles sans plier les coudes. Expirez en redescendant lentement.',
+    `Debout, haltères en mains le long du corps. Inspirez, hausser les épaules vers les oreilles sans plier les coudes. Expirez en relâchant lentement.`,
 
   'Oiseau (haltères)':
-    'Tenez un haltère dans chaque main, genoux légèrement fléchis. Penchez le buste en avant, dos droit. Inspirez en écartant les bras latéralement jusqu’à l’horizontale. Expirez en revenant. Contractez les trapèzes et l’arrière d’épaule.',
+    `Debout, buste penché à 30° et jambes fléchies. Haltères sous les épaules. Inspirez en écartant latéralement jusqu’à l’horizontale. Expirez en redescendant.`,
+
+  'Superman':
+    `Allongez-vous face au sol, bras tendus devant vous. Contractez le dos et les fessiers pour lever simultanément bras et jambes de quelques centimètres. Maintenez 1–2 s, puis relâchez.`,
+
+  'Soulevé de terre':
+    `Debout, barre au sol proche des tibias. Prise pronation ou mixte. Genoux fléchis, dos droit. Inspirez, montez la barre en poussant sur les talons et déployant hanches et genoux. Verrouillez en haut, puis redescendez barre proche des jambes.`,
+
+  'Traction L-Sit':
+    `Comme une traction pronation, mais en position L-Sit : jambes tendues à 90° devant vous. Core engagé. Inspirez pour monter, expirez pour descendre.`,
 
   // Jambes
   'Squat barre':
-    'Placez la barre sur les trapèzes, pieds à largeur d’épaules. Inspirez en fléchissant les genoux et les hanches pour descendre en gardant le dos droit. Descendez jusqu’à ce que les cuisses soient au moins parallèles au sol. Expirez en revenant en position debout en poussant sur les talons.',
+    `Placez la barre sur les trapèzes, pieds à largeur épaules. Inspirez en fléchissant genoux et hanches pour descendre, dos droit et poitrine haute. Descendez jusqu’à cuisses parallèles au sol. Expirez en poussant sur les talons pour revenir.`,
 
   'Squat guidé':
-    'Sur la machine guidée, positionnez-vous sous la barre. Inspirez en fléchissant genoux et hanches, descendez lentement. Expirez en poussant la plateforme pour revenir. Pieds à largeur d’épaules.',
+    `Sur machine guidée, positionnez la barre sur vos trapèzes. Inspire en fléchissant genoux et hanches, descendez contrôlé. Expire en poussant la plateforme pour monter.`,
 
   'Presse à cuisses':
-    'Asseyez-vous, pieds à plat sur la plateforme. Inspirez en fléchissant les genoux pour abaisser la plateforme vers vous. Expirez en poussant avec la plante des pieds, genoux vers l’ext’; gardez les pieds centraux.',
+    `Assis, pieds à plat largeur hanches sur la plateforme. Inspirez en fléchissant les genoux pour abaisser la charge. Expirez en repoussant avec les talons, genoux alignés avec les orteils.`,
+
+  'Presse à cuisses incliné':
+    `Même principe que la presse classique mais siège incliné. Ajustez la position des pieds pour cibler quadriceps ou fessiers.`,
 
   'Fentes avant':
-    'Tenez des haltères ou barre, dos droit. Faites un grand pas en avant, genou avant au-dessus de la cheville et genou arrière proche du sol. Inspirez en descendant, expirez en revenant en poussant sur le talon avant.',
+    `Debout, haltères en mains ou barre sur trapèzes. Faites un grand pas en avant, genou avant aligné sur la cheville, genou arrière près du sol. Inspirez en descendant, expirez en repoussant.`,
 
   'Leg curl assis':
-    'Asseyez-vous, placez l’arrière des chevilles sous les coussins. Inspirez, fléchissez les genoux pour rapprocher les talons des fesses. Expirez en revenant lentement.',
+    `Assis, chevilles sous le coussinet. Inspirez, fléchissez les genoux vers les fesses. Expirez en revenant contrôlé.`,
 
   'Leg curl debout':
-    'Debout face à la machine, fixez l’attache au niveau de la cheville. Inspirez en amenant le talon vers la fesse, genou immobile. Expirez en contrôlant la descente.',
+    `Debout face à la machine, attachez l’élastique ou la tige à la cheville. Inspirez en fléchissant le genou pour amener le talon vers la fesse. Expirez en redescendant.`,
 
   'Mollets à la presse':
-    'Pieds sur plateforme, genoux légèrement fléchis. Inspirez, poussez avec les orteils pour soulever la plateforme en contractant les mollets. Expirez en revenant lentement.',
+    `Pieds sur plateforme, genoux légèrement fléchis. Inspirez, poussez sur la pointe des pieds pour soulever la charge. Expirez en redescendant doucement.`,
 
   'Sissy squat':
-    'Debout, pieds fixés, mains sur un support pour l’équilibre. Inspirez, fléchissez les genoux en inclinant légèrement le buste en arrière tout en gardant le haut du corps droit. Expirez en revenant.',
+    `Debout, pieds écartés, mains sur support. Fléchissez les genoux et penchez le buste en arrière en gardant le haut du corps droit. Inspirez en descendant, expirez en remontant.`,
 
   // Épaules
   'Développé militaire':
-    'Assis ou debout, barre au niveau des épaules, prise pronation. Inspirez, poussez la barre au-dessus de la tête en verrouillant légèrement les coudes. Expirez en redescendant sous contrôle.',
+    `Barre au niveau des épaules, prise pronation. Inspirez, poussez la barre au-dessus de la tête en verrouillant légèrement les coudes. Expirez en redescendant sous contrôle.`,
 
   'Développé Arnold':
-    'Assis, haltères en prise neutre devant les épaules, paumes face à vous. Inspirez, tournez les poignets en poussant les haltères au-dessus de la tête. Expirez en redescendant et en inversant la rotation.',
+    `Assis, haltères en prise neutre devant les épaules. Inspirez, tournez les poignets en poussant les haltères au-dessus de la tête. Reversez la rotation en redescendant.`,
 
-  'Élévations latérales':
-    'Debout, haltères le long du corps. Inspirez, levez les haltères latéralement jusqu’au niveau des épaules, coudes légèrement fléchis. Expirez en redescendant.',
+  'Élévations latérales (haltères)':
+    `Debout, haltères le long du corps. Inspire, lève les bras latéralement jusqu’à la hauteur des épaules. Expire en redescendant.`,
+
+  'Élévations latérales (poulie)':
+    `Debout côté poulie basse, saisissez la poignée. Inspirez, levez latéralement jusqu’à l’horizontale. Expirez en contrôlant la descente.`,
 
   'Élévations frontales':
-    'Tenez un haltère dans chaque main. Inspirez, levez les bras devant vous jusqu’au niveau des épaules. Expirez en redescendant lentement.',
+    `Debout, un haltère dans chaque main devant les cuisses. Inspire, lève les haltères devant jusqu’à hauteur des épaules. Expire en redescendant.`,
 
   'Oiseau poulies':
-    'Débrouillez-vous entre deux poulies basse. Corps incliné en avant, tirez la poignée latéralement en gardant l’autre bras fixe pour l’équilibre. Inspirez en tirant, expirez en revenant.',
+    `Debout entre deux poulies basses, buste incliné. Inspirez en écartant les poignées latéralement. Expirez en revenant.`,
 
   'Rowing menton':
-    'Debout, barre en prise serrée (mains proches). Inspirez, tirez la barre vers le menton en écartant les coudes. Expirez en redescendant.',
+    `Debout, barre prise serrée. Inspirez, tirez vers le menton en écartant les coudes. Expirez en redescendant.`,
 
   // Bras
   'Curl barre droite':
-    'Debout, barre tenue en prise supination. Inspirez, fléchissez les coudes pour remonter la barre vers les épaules sans bouger les coudes. Expirez en redescendant.',
+    `Debout, prise supination largeur épaules. Inspirez en fléchissant les coudes pour remonter la barre aux épaules. Expirez en redescendant.`,
 
   'Curl barre EZ':
-    'Même exécution qu’au curl barre droite, mais avec la barre EZ pour réduire la tension des poignets.',
+    `Comme le curl barre droite, mais mains sur la barre EZ pour plus de confort.`,
 
-  'Curl haltères':
-    'Debout, haltères en mains. Inspirez, alternez ou simultanément, fléchissez les coudes pour amener les haltères vers les épaules. Expirez en revenant.',
+  'Curl concentration':
+    `Assis, coude calé sur votre cuisse intérieure. Inspirez en remontant l’haltère vers l’épaule. Expirez en redescendant.`,
+
+  'Curl marteau':
+    `Debout, haltères en prise neutre. Inspire, fléchis les coudes sans rotation. Expire en redescendant.`,
+
+  'Curl haltères assis':
+    `Assis, dossier droit, haltères en main. Inspirez en alternant ou simultané, remontez les haltères. Expirez en revenant.`,
+
+  'Curl pupitre':
+    `Assis sur un pupitre, bras posés, barre ou haltère en main. Inspirez en remontant. Expirez en revenant.`,
 
   'Curl incliné':
-    'Assis sur un banc incliné (environ 45°), laissez les bras pendre. Inspirez, fléchissez les coudes pour remonter les haltères. Expirez en revenant.',
-
-  'Curl poulie vis-à-vis':
-    'Debout entre deux poulies, poignées à hauteur d’épaule. Inspirez, tirez alternativement chaque poignée vers l’épaule. Expirez en contrôlant la descente.',
+    `Allongé sur banc incliné, bras pendants. Inspirez en fléchissant les coudes pour remonter. Expirez en revenant.`,
 
   'Extensions triceps haltère':
-    'Assis ou debout, tenez un haltère avec les deux mains au-dessus de la tête. Inspirez, fléchissez les coudes derrière la tête. Expirez en verrouillant les coudes en extension.',
+    `Debout ou assis, haltère tenu à deux mains au-dessus de la tête. Inspirez en fléchissant les coudes pour abaisser l’haltère derrière la tête. Expirez en verrouillant les coudes en extension.`,
 
-  'Extension triceps poulie':
-    'Debout face à la poulie haute, barre ou corde en mains. Inspirez, poussez vers le bas jusqu’à extension complète des avant-bras. Expirez en contrôlant le retour.',
+  'Extension triceps poulie haute':
+    `Debout, face à la poulie haute. Inspirez, poussez la barre vers le bas jusqu’à verrouillage des coudes. Expirez en revenant.`,
+
+  'Extension triceps poulie basse':
+    `Debout dos à la poulie, barre ou corde derrière la tête. Inspirez, poussez vers l’avant. Expirez en revenant.`,
 
   'Dip triceps':
-    'Sur barres parallèles, torse droit, mains sous les épaules. Inspirez en descendant les coudes vers l’arrière. Expirez en repoussant sans verrouiller totalement.',
+    `Sur barres parallèles, mains sous les épaules, torse droit. Inspirez en fléchissant les coudes vers l’arrière. Expirez en repoussant.`,
 
   // Abdos
   'Crunch au sol':
-    'Allongez-vous dos au sol, genoux fléchis et pieds à plat. Mains derrière la tête, inspirez, puis contractez les abdominaux pour relever les épaules du sol. Expirez en redescendant.',
+    `Allongez-vous dos au sol, genoux fléchis, pieds à plat. Mains derrière la tête, inspirez en soulevant épaules et omoplates du sol. Expirez en redescendant.`,
 
   'Relevé de jambes suspendu':
-    'Suspendez-vous à une barre. Inspirez, contractez les abdos et levez les jambes tendues ou fléchies jusqu’à l’horizontale. Expirez en redescendant lentement.',
+    `Suspendez-vous à une barre. Inspirez, contractez les abdos pour lever les jambes tendues ou fléchies à l’horizontale. Expirez en redescendant.`,
 
   'Planche':
-    'Mettez-vous en appui sur avant-bras et pointes de pied, corps aligné. Contractez abdos et fessiers. Respirez normalement et tenez la position.',
+    `En appui sur avant-bras et pointes de pied, corps aligné. Contractez abdos et fessiers. Respirez normalement et maintenez la position.`,
 
   'Gainage latéral':
-    'En appui sur un avant-bras, corps aligné latéralement. Inspirez, gardez le bassin levé et contractez les abdos obliques. Expirez en maintenant.',
+    `Appui sur un avant-bras, corps aligné latéralement. Inspirez en maintenant le bassin élevé et contractez les obliques. Expirez en tenant la position.`,
 
   'Crunch poulie haute':
-    'Genoux sous la poulie, poignées en haut. Inspirez, tirez vers le bas en fléchissant le torse pour rapprocher la poitrine des genoux. Expirez en revenant.',
+    `À genoux sous la poulie, poignées en mains. Inspirez, tirez vers le bas en fléchissant le tronc pour rapprocher la poitrine des genoux. Expirez en revenant.`,
 
   'Roulette abdo':
-    'À genoux, main sur la roulette. Inspirez, roulez lentement vers l’avant sans cambrer le dos. Expirez en tirant la roulette vers vous avec les abdos.'
+    `À genoux, mains sur la roulette. Inspirez, roulez lentement vers l’avant sans creuser le dos. Expirez en ramenant la roulette vers vous en contractant les abdos.`
 };
 
 // Coefficients de difficulté par exercice (valeur par défaut = 1 si non spécifié)
@@ -263,7 +290,7 @@ const EXERCISE_DIFFICULTY: Record<string, number> = {
   'Développé couché (haltères)':    1.5,
   'Développé incliné':              1.4,
   'Développé décliné':              1.4,
-  'Pompes':                          1.2,
+  'Pompes':                         1.2,
   'Dips pectoraux':                 1.3,
   'Écarté couché (haltères)':       1.3,
   'Écarté aux poulies':             1.2,
@@ -272,11 +299,14 @@ const EXERCISE_DIFFICULTY: Record<string, number> = {
   'Tractions pronation':            1.6,
   'Tractions supination':           1.6,
   'Rowing barre':                   1.4,
-  'Rowing haltère unilatéral':     1.4,
+  'Rowing haltère unilatéral':      1.4,
   'Tirage horizontal':              1.3,
   'Tirage vertical':                1.3,
   'Shrug (haussement)':             1.1,
   'Oiseau (haltères)':              1.2,
+  'Superman':                       1.1,
+  'Soulevé de terre':               1.3,
+  'Traction L-Sit':                 1.8,
   // Jambes
   'Squat barre':                    1.7,
   'Squat guidé':                    1.5,
@@ -289,19 +319,23 @@ const EXERCISE_DIFFICULTY: Record<string, number> = {
   // Épaules
   'Développé militaire':            1.5,
   'Développé Arnold':               1.5,
-  'Élévations latérales':           1.2,
+  'Développé assis (haltères)':     1.3,      
+  'Élévations latérales (haltères)':1.3,
+  'Élévations latérales (poulie)':  1.2,
   'Élévations frontales':           1.2,
   'Oiseau poulies':                 1.2,
   'Rowing menton':                  1.3,
   // Bras
   'Curl barre droite':               1.2,
   'Curl barre EZ':                   1.2,
-  'Curl haltères':                   1.1,
+  'Curl concentration':              1.1,
+  'Curl marteau':                    1.3,
+  'Curl haltères assis':             1.1,
+  'Curl pupitre':                    1.0,
   'Curl incliné':                    1.2,
-  'Curl poulie vis-à-vis':           1.2,
   'Extensions triceps haltère':      1.3,
-  'Extension triceps poulie':        1.3,
-  'Dip triceps':                     1.4,
+  'Extension triceps poulie haute':  1.2,
+  'Extension triceps poulie basse':  1.3,
   // Abdos (exos statiques en durée)
   'Crunch au sol':                   1.0,
   'Relevé de jambes suspendu':       1.2,
